@@ -1,0 +1,29 @@
+{
+  "manifest_version": 3,
+  "name": "Xcrapper",
+  "version": "0.0.1",
+  "description": "Collects video tweet links and metadata",
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "storage",
+    "unlimitedStorage"
+  ],
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://x.com/*",
+        "https://twitter.com/*"
+      ],
+      "js": [
+        "content.js"
+      ]
+    }
+  ],
+  "background": {
+    "service_worker": "background.js"
+  }
+}
