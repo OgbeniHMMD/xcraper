@@ -1,0 +1,13 @@
+{
+  "name": "xcrapper",
+  "version": "0.0.1",
+  "description": "Collects video tweet links and metadata",
+  "main": "background.js",
+  "scripts": {
+    "build:css": "tailwindcss -i ./dashboard/input.css -o ./dashboard/tailwind.css --minify",
+    "watch:css": "tailwindcss -i ./dashboard/input.css -o ./dashboard/tailwind.css --watch"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.0"
+  }
+}

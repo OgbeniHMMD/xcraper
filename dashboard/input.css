@@ -1,0 +1,40 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer utilities {
+  .stat-card::before {
+    content: "";
+    @apply absolute top-0 left-0 right-0 h-1 bg-transparent transition-[height] duration-200;
+  }
+  .stat-card.pending::before {
+    @apply bg-amber-500;
+  }
+  .stat-card.done::before {
+    @apply bg-emerald-500;
+  }
+  .stat-card.today::before {
+    @apply bg-blue-500;
+  }
+  
+  .stat-card.active {
+    @apply border-slate-900 bg-slate-50;
+  }
+  .stat-card.active::before {
+    @apply h-1.5;
+  }
+  .stat-card.active.pending {
+    @apply border-amber-500 bg-amber-500/[0.04];
+  }
+  .stat-card.active.done {
+    @apply border-emerald-500 bg-emerald-500/[0.04];
+  }
+  .stat-card.active.today {
+    @apply border-blue-500 bg-blue-500/[0.04];
+  }
+
+  .small-btn svg,
+  .small-btn path {
+    @apply pointer-events-none;
+  }
+}
