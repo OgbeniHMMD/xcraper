@@ -2,6 +2,8 @@ async function loadGallery() {
   const data = await chrome.storage.local.get(["collectedTweets"])
   let tweets = Object.values(data.collectedTweets || {}) // Keep raw data array
 
+  let activeStatusFilter = "all"
+
   const grid = document.getElementById("grid")
   const search = document.getElementById("search")
   const sortFilter = document.getElementById("sort-filter")
@@ -83,14 +85,25 @@ async function loadGallery() {
 
   // Combined function handling Sorting AND Live Searching together
   const getProcessedTweets = () => {
-    // 1. Filter by search query (Checking both text AND username)
+    // 1. Filter by status filter
+    let result = tweets
+    if (activeStatusFilter === "pending") {
+      result = result.filter((t) => !t.isDone)
+    } else if (activeStatusFilter === "done") {
+      result = result.filter((t) => t.isDone)
+    } else if (activeStatusFilter === "today") {
+      const todayStr = new Date().toDateString()
+      result = result.filter((t) => new Date(t.collectedAt).toDateString() === todayStr)
+    }
+
+    // 2. Filter by search query (Checking both text AND username)
     const query = search.value.toLowerCase()
 
-    let result = tweets.filter((t) => {
-      // 1a. Check text content
+    result = result.filter((t) => {
+      // 2a. Check text content
       const matchText = t.text && t.text.toLowerCase().includes(query)
 
-      // 1b. Derive username from URL exactly how we do it in the renderer
+      // 2b. Derive username from URL exactly how we do it in the renderer
       let username = ""
       try {
         const pathParts = new URL(t.link).pathname.split("/")
@@ -147,6 +160,16 @@ async function loadGallery() {
 
   search.addEventListener("input", () => render(getProcessedTweets()))
   sortFilter.addEventListener("change", () => render(getProcessedTweets()))
+
+  // Set up status filtering click handlers on stats cards
+  document.querySelectorAll(".stat-card").forEach((card) => {
+    card.addEventListener("click", () => {
+      document.querySelectorAll(".stat-card").forEach((c) => c.classList.remove("active"))
+      card.classList.add("active")
+      activeStatusFilter = card.getAttribute("data-filter")
+      render(getProcessedTweets())
+    })
+  })
 
   grid.addEventListener("click", async (e) => {
     const doneBtn = e.target.closest(".done-btn")
