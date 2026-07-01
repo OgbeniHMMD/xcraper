@@ -1,40 +1,47 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
-@layer utilities {
-  .stat-card::before {
+@theme {
+  --color-x-blue: #1da1f2;
+  --color-x-green: #17bf63;
+  --color-x-red: #e0245e;
+}
+
+@utility stat-card {
+  position: relative;
+  &::before {
     content: "";
-    @apply absolute top-0 left-0 right-0 h-1 bg-transparent transition-[height] duration-200;
+    @apply top-0 right-0 left-0 absolute bg-transparent h-1 transition-[height] duration-200;
   }
-  .stat-card.pending::before {
+  &.pending::before {
     @apply bg-amber-500;
   }
-  .stat-card.done::before {
+  &.done::before {
     @apply bg-emerald-500;
   }
-  .stat-card.today::before {
+  &.today::before {
     @apply bg-blue-500;
   }
-  
-  .stat-card.active {
-    @apply border-slate-900 bg-slate-50;
-  }
-  .stat-card.active::before {
-    @apply h-1.5;
-  }
-  .stat-card.active.pending {
-    @apply border-amber-500 bg-amber-500/[0.04];
-  }
-  .stat-card.active.done {
-    @apply border-emerald-500 bg-emerald-500/[0.04];
-  }
-  .stat-card.active.today {
-    @apply border-blue-500 bg-blue-500/[0.04];
-  }
 
-  .small-btn svg,
-  .small-btn path {
+  &.active {
+    @apply bg-slate-50 border-slate-900;
+    &::before {
+      @apply h-1.5;
+    }
+    &.pending {
+      @apply border-amber-500 bg-amber-500/[0.04];
+    }
+    &.done {
+      @apply border-emerald-500 bg-emerald-500/[0.04];
+    }
+    &.today {
+      @apply border-blue-500 bg-blue-500/[0.04];
+    }
+  }
+}
+
+@utility small-btn {
+  & svg,
+  & path {
     @apply pointer-events-none;
   }
 }

@@ -8,6 +8,7 @@
     "watch:css": "tailwindcss -i ./dashboard/input.css -o ./dashboard/tailwind.css --watch"
   },
   "devDependencies": {
-    "tailwindcss": "^3.4.0"
+    "@tailwindcss/cli": "^4.3.2",
+    "tailwindcss": "^4.3.2"
   }
 }
