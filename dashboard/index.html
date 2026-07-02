@@ -2,40 +2,71 @@
 <html>
   <head>
     <title>Xscrapper Gallery</title>
-    <link href="tailwind.css" rel="stylesheet">
+    <link href="tailwind.css" rel="stylesheet" />
   </head>
-  <body class="bg-slate-50 text-slate-900 p-6 m-0 min-h-screen">
-    <div class="max-w-[1400px] mx-auto">
-      <h2 class="text-2xl font-bold mt-0 mb-6 text-slate-900">Collected Videos</h2>
+  <body class="bg-slate-50 m-0 p-6 min-h-screen text-slate-900">
+    <div class="mx-auto max-w-400">
+      <h2 class="mt-0 mb-6 font-bold text-slate-900 text-2xl">Collected Videos</h2>
 
-      <div class="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-4 mb-6">
-        <div class="stat-card active bg-white p-5 border border-slate-200 relative overflow-hidden flex flex-col justify-center cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md hover:border-slate-300 active:translate-y-0" data-filter="all">
-          <div id="stat-total" class="text-3xl font-bold leading-none mb-1.5 text-slate-900">0</div>
-          <div class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Total Items</div>
+      <div class="gap-4 grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] mb-6">
+        <div
+          class="relative flex flex-col justify-center bg-white hover:shadow-md p-5 border border-slate-200 hover:border-slate-300 overflow-hidden transition-all hover:-translate-y-0.5 active:translate-y-0 duration-200 cursor-pointer stat-card active"
+          data-filter="all"
+        >
+          <div id="stat-total" class="mb-1.5 font-bold text-slate-900 text-3xl leading-none">0</div>
+          <div class="font-semibold text-[11px] text-slate-500 uppercase tracking-wider">Total Items</div>
         </div>
-        <div class="stat-card pending bg-white p-5 border border-slate-200 relative overflow-hidden flex flex-col justify-center cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md hover:border-slate-300 active:translate-y-0" data-filter="pending">
-          <div id="stat-pending" class="text-3xl font-bold leading-none mb-1.5 text-amber-500">0</div>
-          <div class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Pending</div>
+        <div
+          class="relative flex flex-col justify-center bg-white hover:shadow-md p-5 border border-slate-200 hover:border-slate-300 overflow-hidden transition-all hover:-translate-y-0.5 active:translate-y-0 duration-200 cursor-pointer stat-card pending"
+          data-filter="pending"
+        >
+          <div id="stat-pending" class="mb-1.5 font-bold text-amber-500 text-3xl leading-none">0</div>
+          <div class="font-semibold text-[11px] text-slate-500 uppercase tracking-wider">Pending</div>
         </div>
-        <div class="stat-card done bg-white p-5 border border-slate-200 relative overflow-hidden flex flex-col justify-center cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md hover:border-slate-300 active:translate-y-0" data-filter="done">
-          <div id="stat-done" class="text-3xl font-bold leading-none mb-1.5 text-emerald-500">0</div>
-          <div class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Done</div>
+        <div
+          class="relative flex flex-col justify-center bg-white hover:shadow-md p-5 border border-slate-200 hover:border-slate-300 overflow-hidden transition-all hover:-translate-y-0.5 active:translate-y-0 duration-200 cursor-pointer stat-card done"
+          data-filter="done"
+        >
+          <div id="stat-done" class="mb-1.5 font-bold text-emerald-500 text-3xl leading-none">0</div>
+          <div class="font-semibold text-[11px] text-slate-500 uppercase tracking-wider">Done</div>
         </div>
-        <div class="stat-card today bg-white p-5 border border-slate-200 relative overflow-hidden flex flex-col justify-center cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md hover:border-slate-300 active:translate-y-0" data-filter="today">
-          <div id="stat-today" class="text-3xl font-bold leading-none mb-1.5 text-blue-500">0</div>
-          <div class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Saved Today</div>
+        <div
+          class="relative flex flex-col justify-center bg-white hover:shadow-md p-5 border border-slate-200 hover:border-slate-300 overflow-hidden transition-all hover:-translate-y-0.5 active:translate-y-0 duration-200 cursor-pointer stat-card today"
+          data-filter="today"
+        >
+          <div id="stat-today" class="mb-1.5 font-bold text-blue-500 text-3xl leading-none">0</div>
+          <div class="font-semibold text-[11px] text-slate-500 uppercase tracking-wider">Saved Today</div>
         </div>
       </div>
 
-      <div class="flex gap-3 mb-6 items-center">
-        <div class="grow max-w-[480px] relative">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="relative max-w-120 grow">
           <!-- Inline SVG Search Icon -->
-          <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.637 10.637Z" />
+          <svg
+            class="top-1/2 left-3.5 absolute w-4 h-4 text-slate-400 -translate-y-1/2"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke-width="2"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.637 10.637Z"
+            />
           </svg>
-          <input type="search" id="search" placeholder="Search saved videos..." class="w-full box-border py-2 px-3.5 pl-10 border border-slate-200 text-sm bg-white text-slate-900 rounded-md focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all" />
+          <input
+            type="search"
+            id="search"
+            placeholder="Search saved videos..."
+            class="box-border bg-white px-3.5 py-2 pl-10 border border-slate-200 focus:border-blue-500 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 w-full text-slate-900 text-sm transition-all"
+          />
         </div>
-        <select id="sort-filter" class="py-2 px-3.5 border border-slate-200 bg-white text-sm text-slate-900 rounded-md cursor-pointer h-[38px] focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all">
+        <select
+          id="sort-filter"
+          class="bg-white px-3.5 py-2 border border-slate-200 focus:border-blue-500 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 h-[38px] text-slate-900 text-sm transition-all cursor-pointer"
+        >
           <option value="collected-newest">Collected: Newest First</option>
           <option value="collected-oldest">Collected: Oldest First</option>
           <option value="posted-newest">Posted: Newest First</option>
@@ -43,7 +74,7 @@
         </select>
       </div>
 
-      <div id="grid" class="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-4"></div>
+      <div id="grid" class="gap-4 grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))]"></div>
     </div>
 
     <script src="./index.js"></script>

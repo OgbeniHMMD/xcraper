@@ -38,10 +38,3 @@
     }
   }
 }
-
-@utility small-btn {
-  & svg,
-  & path {
-    @apply pointer-events-none;
-  }
-}

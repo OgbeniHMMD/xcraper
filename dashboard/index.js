@@ -28,34 +28,39 @@ async function loadGallery() {
         }
 
         // Conditional styling and properties depending on completion status
-        const cardClasses = `bg-white overflow-hidden flex flex-col border hover:border-slate-900 transition-all duration-200 ${t.isDone ? "border-emerald-500" : "border-slate-200"
-          }`
+        const cardClasses = `bg-white overflow-hidden flex flex-col border hover:border-slate-900 transition-all duration-200 ${
+          t.isDone ? "border-dashed border-emerald-500" : "border-slate-200"
+        }`
 
-        const doneBtnClasses = `border p-1.5 transition-colors rounded-md flex items-center justify-center done-btn ${t.isDone
-          ? "bg-emerald-500 text-white border-emerald-500 hover:bg-emerald-600"
-          : "bg-white text-slate-800 border-slate-200 hover:bg-slate-50"
-          }`
+        const doneBtnClasses = `border p-1.5 transition-colors flex items-center justify-center done-btn ${
+          t.isDone
+            ? "bg-emerald-500 text-white border-emerald-500 hover:bg-emerald-600"
+            : "bg-white text-slate-800 border-slate-200 hover:bg-slate-50"
+        }`
 
-        const btnClasses = "border border-slate-200 bg-white text-slate-800 p-1.5 transition-colors rounded-md hover:bg-slate-50 flex items-center justify-center"
-        const deleteBtnClasses = "border border-slate-200 bg-white text-slate-800 p-1.5 transition-colors rounded-md hover:bg-red-50 hover:text-red-600 hover:border-red-200 flex items-center justify-center delete-btn"
+        const btnClasses =
+          "border border-slate-200 bg-white text-slate-800 py-0.5 px-2 transition-colors hover:bg-slate-50 flex items-center justify-center"
+        const deleteBtnClasses =
+          "border border-slate-200 bg-white text-slate-800 py-0.5 px-2 transition-colors hover:bg-red-50 hover:text-red-600 hover:border-red-200 flex items-center justify-center delete-btn"
 
         return `
             <div class="${cardClasses}">
                 <div class="w-full aspect-[3/4] bg-black overflow-hidden relative">
-                    ${t.thumbnail
-            ? `<img src="${t.thumbnail}" loading="lazy" class="w-full h-full object-contain">`
-            : `<div class="h-full flex items-center justify-center text-slate-400 text-xs">No Preview</div>`
-          }
+                    ${
+                      t.thumbnail
+                        ? `<img src="${t.thumbnail}" loading="lazy" class="w-full h-full object-contain">`
+                        : `<div class="h-full flex items-center justify-center text-slate-400 text-xs">No Preview</div>`
+                    }
                 </div>
 
-                <div class="p-3.5 flex flex-col grow">
-                  <div class="text-[10px] font-medium text-slate-400 mb-1"><strong>${username}</strong> - ${t.time ? new Date(t.time).toLocaleDateString() : "N/A"}</div>
+                <div class="p-2 flex flex-col grow">
+                  <div class="text-[8px] font-medium text-slate-400"><strong>${username}</strong> - ${t.time ? new Date(t.time).toLocaleDateString() : "N/A"}</div>
 
-                  <div class="text-xs leading-relaxed text-slate-800 mb-2 line-clamp-2 min-h-[36px] font-normal">${t.text || "[No Text]"}</div>
+                  <div class="text-[10px] leading-relaxed text-slate-800 py-0.5 line-clamp-2 min-h-[36px] font-normal">${t.text || "[No Text]"}</div>
 
-                  <div class="text-[10px] font-medium text-slate-400 mb-3">${new Date(t.collectedAt).toLocaleString()}</div>
+                  <div class="text-[8px] font-medium text-slate-400 mb-3">${new Date(t.collectedAt).toLocaleString()}</div>
 
-                  <div class="flex justify-between items-center gap-1">
+                  <div class="flex justify-between items-center gap-0.5">
                     <button data-link="${t.link}" class="${doneBtnClasses}" title="${t.isDone ? "Mark Pending" : "Mark Done"}">
                         <span class="inline-block align-middle">&#10003;</span>
                     </button>
@@ -105,7 +110,7 @@ async function loadGallery() {
       try {
         const pathParts = new URL(t.link).pathname.split("/")
         if (pathParts[1]) username = pathParts[1].toLowerCase()
-      } catch (e) { }
+      } catch (e) {}
 
       const matchUser = username.includes(query.replace("@", "")) // Strips '@' if user typed it in search
 
