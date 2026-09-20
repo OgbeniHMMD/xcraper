@@ -29,21 +29,25 @@ async function loadGallery() {
 
         // Conditional styling and properties depending on completion status
         const cardClasses = `bg-white overflow-hidden flex flex-col border hover:border-slate-900 ${
-          t.isDeleted ? "border-red-500 bg-red-50/20" : t.isDone ? "border-dashed border-emerald-500" : "border-slate-200"
+          t.isFlagged ? "border-red-500 bg-red-50/20" : t.isDone ? "border-dashed border-emerald-500" : "border-slate-200"
         }`;
 
         const btnClasses = "text-lg text-slate-800 p-0.5 px-1.5 bg-slate-100 rounded flex items-center justify-center cursor-pointer";
 
         return `
             <div class="${cardClasses}">
-                <div class="w-full aspect-[3/4] bg-black overflow-hidden relative">
+                <div class="w-full aspect-[3/4] bg-black overflow-hidden relative text-white">
+                    <button data-link="${t.link}" class="${btnClasses} delete-btn absolute z-50 right-1 top-1" title="Hard Delete">
+                        <span class="inline-block align-middle">❌</span>
+                    </button>
+
                     ${
-                      t.isDeleted
-                        ? `<div class="absolute inset-0 bg-red-950/75 flex flex-col items-center justify-center text-white text-[10px] font-bold p-2 text-center"><span>⚠️</span><span class="mt-1">Deleted / Suspended</span></div>`
-                        : t.thumbnail
-                          ? `<img src="${t.thumbnail}" loading="lazy" class="w-full h-full object-contain">`
-                          : `<div class="h-full flex items-center justify-center text-slate-400 text-xs">No Preview</div>`
+                      t.isFlagged
+                        ? `<div class="z-20 absolute  inset-0 bg-red-950/60 flex flex-col items-center justify-center text-white text-[10px] font-bold p-2 text-center"><span>⚠️</span><span class="mt-1">Flagged</span></div>`
+                        : ``
                     }
+
+                    <img src="${t.thumbnail}" loading="lazy" alt="No Preview" class="w-full h-full object-contain">
                 </div>
 
                 <div class="p-2 flex flex-col grow">
@@ -67,11 +71,8 @@ async function loadGallery() {
                     <button data-link="${t.link}" class="${btnClasses} copyFx-btn" title="Copy FixupX Link">
                         <span class="inline-block align-middle">📋</span>
                     </button>
-                    <button data-link="${t.link}" class="${btnClasses} flag-btn" title="${t.isDeleted ? "Unflag Deleted" : "Flag as Deleted"}">
-                        <span class="inline-block align-middle">${t.isDeleted ? "♻️" : "🗑️"}</span>
-                    </button>
-                    <button data-link="${t.link}" class="${btnClasses} delete-btn" title="Hard Delete">
-                        <span class="inline-block align-middle">❌</span>
+                    <button data-link="${t.link}" class="${btnClasses} flag-btn" title="${t.isFlagged ? "Unflag" : "Flag"}">
+                        <span class="inline-block align-middle">🚩</span>
                     </button>
                   </div>
                 </div>
@@ -92,8 +93,8 @@ async function loadGallery() {
     } else if (activeStatusFilter === "today") {
       const todayStr = new Date().toDateString();
       result = result.filter((t) => new Date(t.collectedAt).toDateString() === todayStr);
-    } else if (activeStatusFilter === "deleted") {
-      result = result.filter((t) => t.isDeleted);
+    } else if (activeStatusFilter === "flagged") {
+      result = result.filter((t) => t.isFlagged);
     }
 
     // 2. Filter by search query (Checking both text AND username)
@@ -148,16 +149,12 @@ async function loadGallery() {
     // Calculate items collected within the current calendar day
     const todayStr = new Date().toDateString();
     const todayCount = tweets.filter((t) => new Date(t.collectedAt).toDateString() === todayStr).length;
-    const deletedCount = tweets.filter((t) => t.isDeleted).length;
-
-    console.log({ xx: tweets.filter((t) => t.isDeleted) });
-    console.log({ deletedCount });
-
+    const flaggedCount = tweets.filter((t) => t.isFlagged).length;
     document.getElementById("stat-total").innerText = totalCount;
     document.getElementById("stat-pending").innerText = pendingCount;
     document.getElementById("stat-done").innerText = doneCount;
     document.getElementById("stat-today").innerText = todayCount;
-    document.getElementById("stat-deleted").innerText = deletedCount;
+    document.getElementById("stat-flagged").innerText = flaggedCount;
   };
 
   render(getProcessedTweets());
@@ -257,7 +254,7 @@ async function loadGallery() {
       const localData = await chrome.storage.local.get(["collectedTweets"]);
 
       if (localData.collectedTweets && localData.collectedTweets[targetLink]) {
-        localData.collectedTweets[targetLink].isDeleted = !localData.collectedTweets[targetLink].isDeleted;
+        localData.collectedTweets[targetLink].isFlagged = !localData.collectedTweets[targetLink].isFlagged;
         await chrome.storage.local.set({ collectedTweets: localData.collectedTweets });
 
         tweets = Object.values(localData.collectedTweets);
