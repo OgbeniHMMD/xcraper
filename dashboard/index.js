@@ -29,8 +29,8 @@ async function loadGallery() {
         }
 
         // Conditional styling and properties depending on completion status
-        const cardClasses = `bg-white overflow-hidden flex flex-col border hover:border-slate-900 ${
-          t.isFlagged ? "border-red-500 bg-red-50/20" : t.isDone ? "border-dashed border-emerald-500" : "border-slate-200"
+        const cardClasses = `bg-white overflow-hidden flex flex-col border border-slate-200 hover:border-slate-900 ${
+          t.isFlagged ? "outline-2 outline-red-500 bg-red-50/20" : t.isDone ? "outline-2 outline-emerald-500" : ""
         }`;
 
         const btnClasses = "text-lg text-slate-800 p-0.5 px-1.5 bg-slate-100 rounded flex items-center justify-center cursor-pointer";
@@ -237,10 +237,11 @@ async function loadGallery() {
     contextMenu.innerHTML = `
         <div class="p-1 text-xs">
             <button class="block w-full text-left px-4 py-2 hover:bg-slate-100 rounded context-action" data-action="open-x">Open in X</button>
-            <button class="block w-full text-left px-4 py-2 hover:bg-slate-100 rounded context-action" data-action="copy-link">Copy URL</button>
-            <hr class="my-1 border-slate-200">
-            <button class="block w-full text-left px-4 py-2 hover:bg-slate-100 rounded context-action" data-action="copy-fixup">Copy FixupX Link</button>
             <button class="block w-full text-left px-4 py-2 hover:bg-slate-100 rounded context-action" data-action="open-tweeload">Open in Tweeload</button>
+            <hr class="my-1 border-slate-200">
+            <button class="block w-full text-left px-4 py-2 hover:bg-slate-100 rounded context-action" data-action="copy-link">Copy Link</button>
+            <button class="block w-full text-left px-4 py-2 hover:bg-slate-100 rounded context-action" data-action="copy-fixup">Copy FixupX Link</button>
+            <button class="block w-full text-left px-4 py-2 hover:bg-slate-100 rounded context-action" data-action="copy-tweeload">Copy Tweeload Link</button>
             <hr class="my-1 border-slate-200">
             <button class="block w-full text-left px-4 py-2 hover:bg-slate-100 rounded context-action" data-action="toggle-done">Toggle Done</button>
             <button class="block w-full text-left px-4 py-2 hover:bg-slate-100 rounded context-action" data-action="toggle-flag">Toggle Flag</button>
@@ -293,6 +294,8 @@ async function loadGallery() {
         navigator.clipboard.writeText(linksToActOn.join("\n"));
       } else if (action === "copy-fixup") {
         navigator.clipboard.writeText(linksToActOn.map((link) => link.replace("x.com", "fixupx.com").replace("twitter.com", "fixupx.com")).join("\n"));
+      } else if (action === "copy-tweeload") {
+        navigator.clipboard.writeText(linksToActOn.map((link) => link.replace("x.com", "tweeload.com").replace("twitter.com", "tweeload.com")).join("\n"));
       } else if (action === "open-tweeload") {
         linksToActOn.forEach((link) => window.open(link.replace("x.com", "tweeload.com").replace("twitter.com", "tweeload.com"), "_blank"));
       } else if (action === "unmark-all") {
