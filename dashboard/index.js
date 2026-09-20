@@ -234,6 +234,81 @@ async function loadGallery() {
     autoScrollBtn.classList.remove("bg-red-50", "border-red-200");
   }
 
+  //
+
+  // Right-click context menu
+  const contextMenu = document.createElement("div");
+  contextMenu.id = "custom-context-menu";
+  contextMenu.className = "hidden fixed bg-white shadow-lg border border-slate-200 rounded-lg z-[100] text-sm";
+  document.body.appendChild(contextMenu);
+
+  document.addEventListener("contextmenu", (e) => {
+    const card = e.target.closest(".relative");
+    if (!card) {
+      contextMenu.classList.add("hidden");
+      return;
+    }
+
+    e.preventDefault();
+    const link = card.querySelector(".select-checkbox").getAttribute("data-link");
+
+    contextMenu.innerHTML = `
+        <div class="p-1">
+            <button class="block w-full text-left px-4 py-2 hover:bg-slate-100 rounded context-action" data-action="copy-link">Copy URL</button>
+            <button class="block w-full text-left px-4 py-2 hover:bg-slate-100 rounded context-action" data-action="copy-fixup">Copy FixupX Link</button>
+            <button class="block w-full text-left px-4 py-2 hover:bg-slate-100 rounded context-action" data-action="open-tweeload">Open in Tweeload</button>
+            <hr class="my-1 border-slate-100">
+            <button class="block w-full text-left px-4 py-2 hover:bg-slate-100 rounded context-action" data-action="toggle-done">Mark as Done/Pending</button>
+            <button class="block w-full text-left px-4 py-2 hover:bg-slate-100 rounded context-action" data-action="toggle-flag">Flag/Unflag</button>
+            <button class="block w-full text-left px-4 py-2 hover:bg-slate-100 rounded text-red-600 context-action" data-action="delete">Delete</button>
+        </div>
+    `;
+
+    contextMenu.style.top = `${e.clientY}px`;
+    contextMenu.style.left = `${e.clientX}px`;
+    contextMenu.classList.remove("hidden");
+    contextMenu.dataset.link = link;
+  });
+
+  document.addEventListener("click", async (e) => {
+    if (e.target.closest("#custom-context-menu")) {
+      const action = e.target.getAttribute("data-action");
+      const link = contextMenu.dataset.link;
+
+      if (action === "copy-link") {
+        navigator.clipboard.writeText(link);
+      } else if (action === "copy-fixup") {
+        navigator.clipboard.writeText(link.replace("x.com", "fixupx.com").replace("twitter.com", "fixupx.com"));
+      } else if (action === "open-tweeload") {
+        window.open(link.replace("x.com", "tweeload.com").replace("twitter.com", "tweeload.com"), "_blank");
+      } else if (action === "toggle-done" || action === "toggle-flag" || action === "delete") {
+        const localData = await chrome.storage.local.get(["collectedTweets"]);
+        if (localData.collectedTweets && localData.collectedTweets[link]) {
+          if (action === "toggle-done") {
+            localData.collectedTweets[link].isDone = !localData.collectedTweets[link].isDone;
+          } else if (action === "toggle-flag") {
+            localData.collectedTweets[link].isFlagged = !localData.collectedTweets[link].isFlagged;
+          } else if (action === "delete") {
+            if (confirm("Are you sure you want to delete this item?")) {
+              delete localData.collectedTweets[link];
+            } else {
+              contextMenu.classList.add("hidden");
+              return;
+            }
+          }
+          await chrome.storage.local.set({ collectedTweets: localData.collectedTweets });
+          tweets = Object.values(localData.collectedTweets);
+          render(getProcessedTweets());
+          updateStats();
+        }
+      }
+
+      contextMenu.classList.add("hidden");
+    } else {
+      contextMenu.classList.add("hidden");
+    }
+  });
+
   // Set up status filtering click handlers on stats cards
   document.querySelectorAll(".stat-card").forEach((card) => {
     card.addEventListener("click", () => {
