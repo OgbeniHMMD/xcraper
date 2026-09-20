@@ -1,6 +1,7 @@
 <!doctype html>
 <html>
   <head>
+    <meta charset="UTF-8" />
     <title>Xscrapper Gallery</title>
     <link href="tailwind.css" rel="stylesheet" />
   </head>
@@ -72,6 +73,14 @@
           <option value="posted-newest">Posted: Newest First</option>
           <option value="posted-oldest">Posted: Oldest First</option>
         </select>
+        <button
+          id="auto-scroll"
+          class="flex items-center gap-2 bg-white hover:bg-slate-50 px-3.5 py-2 border border-slate-200 focus:border-blue-500 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 h-[38px] text-slate-900 text-sm transition-all cursor-pointer"
+          title="Auto-scroll to cache thumbnails"
+        >
+          <span id="scroll-icon">⏬</span>
+          <span id="scroll-text">Auto Scroll</span>
+        </button>
       </div>
 
       <div id="grid" class="gap-4 grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))]"></div>
