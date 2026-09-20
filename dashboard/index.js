@@ -3,10 +3,13 @@ async function loadGallery() {
   let tweets = Object.values(data.collectedTweets || {}); // Keep raw data array
 
   let activeStatusFilter = "all";
+  let selectedItems = new Set(); // Track selected links
 
   const grid = document.getElementById("grid");
   const search = document.getElementById("search");
   const sortFilter = document.getElementById("sort-filter");
+  const bulkActionsContainer = document.getElementById("bulk-actions");
+  const selectedCountEl = document.getElementById("selected-count");
 
   const render = (items) => {
     if (items.length === 0) {
@@ -35,7 +38,8 @@ async function loadGallery() {
         const btnClasses = "text-lg text-slate-800 p-0.5 px-1.5 bg-slate-100 rounded flex items-center justify-center cursor-pointer";
 
         return `
-            <div class="${cardClasses}">
+            <div class="${cardClasses} relative">
+                <input type="checkbox" data-link="${t.link}" ${selectedItems.has(t.link) ? "checked" : ""} class="absolute top-1 left-1 z-50 w-4 h-4 cursor-pointer select-checkbox">
                 <div class="w-full aspect-[3/4] bg-black overflow-hidden relative text-white">
                     ${
                       activeStatusFilter == "flagged"
@@ -147,6 +151,15 @@ async function loadGallery() {
     return result;
   };
 
+  const updateBulkUI = () => {
+    if (selectedItems.size > 0) {
+      bulkActionsContainer.classList.remove("hidden");
+      selectedCountEl.innerText = `${selectedItems.size} selected`;
+    } else {
+      bulkActionsContainer.classList.add("hidden");
+    }
+  };
+
   const updateStats = () => {
     const totalCount = tweets.length;
     const doneCount = tweets.filter((t) => t.isDone).length;
@@ -231,7 +244,49 @@ async function loadGallery() {
     });
   });
 
+  document.addEventListener("click", async (e) => {
+    // Handle Bulk Actions
+    if (e.target.id === "bulk-flag") {
+      const localData = await chrome.storage.local.get(["collectedTweets"]);
+      selectedItems.forEach((link) => {
+        if (localData.collectedTweets[link]) localData.collectedTweets[link].isFlagged = !localData.collectedTweets[link].isFlagged;
+      });
+      await chrome.storage.local.set({ collectedTweets: localData.collectedTweets });
+      tweets = Object.values(localData.collectedTweets);
+      selectedItems.clear();
+      updateBulkUI();
+      render(getProcessedTweets());
+      updateStats();
+    }
+    if (e.target.id === "bulk-delete") {
+      if (confirm(`Are you sure you want to delete ${selectedItems.size} items?`)) {
+        const localData = await chrome.storage.local.get(["collectedTweets"]);
+        selectedItems.forEach((link) => delete localData.collectedTweets[link]);
+        await chrome.storage.local.set({ collectedTweets: localData.collectedTweets });
+        tweets = Object.values(localData.collectedTweets);
+        selectedItems.clear();
+        updateBulkUI();
+        render(getProcessedTweets());
+        updateStats();
+      }
+    }
+    if (e.target.id === "bulk-copy") {
+      const links = Array.from(selectedItems)
+        .map((link) => link.replace("x.com", "fixupx.com").replace("twitter.com", "fixupx.com"))
+        .join("\n");
+      navigator.clipboard.writeText(links);
+      alert(`Copied ${selectedItems.size} links to clipboard!`);
+    }
+  });
+
   grid.addEventListener("click", async (e) => {
+    if (e.target.classList.contains("select-checkbox")) {
+      const link = e.target.getAttribute("data-link");
+      if (e.target.checked) selectedItems.add(link);
+      else selectedItems.delete(link);
+      updateBulkUI();
+      return;
+    }
     const doneBtn = e.target.closest(".done-btn");
     const flagDeletedBtn = e.target.closest(".flag-btn");
     const deleteBtn = e.target.closest(".delete-btn");
