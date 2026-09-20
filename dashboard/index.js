@@ -3,14 +3,11 @@ async function loadGallery() {
   let tweets = Object.values(data.collectedTweets || {}); // Keep raw data array
 
   let activeStatusFilter = "all";
-  // let selectedItems = new Set(); // Track selected links
   let selectedItems = new Set();
 
   const grid = document.getElementById("grid");
   const search = document.getElementById("search");
   const sortFilter = document.getElementById("sort-filter");
-  const bulkActionsContainer = document.getElementById("bulk-actions");
-  const selectedCountEl = document.getElementById("selected-count");
 
   const render = (items) => {
     if (items.length === 0) {
@@ -136,15 +133,6 @@ async function loadGallery() {
     return result;
   };
 
-  const updateBulkUI = () => {
-    // if (selectedItems.size > 0) {
-    //   bulkActionsContainer.classList.remove("hidden");
-    //   selectedCountEl.innerText = `${selectedItems.size} selected`;
-    // } else {
-    //   bulkActionsContainer.classList.add("hidden");
-    // }
-  };
-
   const updateStats = () => {
     const totalCount = tweets.length;
     const doneCount = tweets.filter((t) => t.isDone).length;
@@ -166,6 +154,17 @@ async function loadGallery() {
 
   search.addEventListener("input", () => render(getProcessedTweets()));
   sortFilter.addEventListener("change", () => render(getProcessedTweets()));
+
+  // Stat card filters
+  document.querySelectorAll(".stat-card").forEach((card) => {
+    card.addEventListener("click", () => {
+      document.querySelectorAll(".stat-card").forEach((c) => c.classList.remove("active", "border-indigo-500", "ring-2", "ring-indigo-100"));
+      card.classList.add("active", "border-indigo-500", "ring-2", "ring-indigo-100");
+
+      activeStatusFilter = card.getAttribute("data-filter");
+      render(getProcessedTweets());
+    });
+  });
 
   // Auto-scroll logic
   const autoScrollBtn = document.getElementById("auto-scroll");
@@ -324,39 +323,8 @@ async function loadGallery() {
       return;
     }
 
-    // 2. Bulk Actions
-    if (e.target.id === "bulk-flag") {
-      const localData = await chrome.storage.local.get(["collectedTweets"]);
-      selectedItems.forEach((link) => {
-        if (localData.collectedTweets[link]) localData.collectedTweets[link].isFlagged = !localData.collectedTweets[link].isFlagged;
-      });
-      await chrome.storage.local.set({ collectedTweets: localData.collectedTweets });
-      tweets = Object.values(localData.collectedTweets);
-      selectedItems.clear();
-
-      render(getProcessedTweets());
-      updateStats();
-    } else if (e.target.id === "bulk-delete") {
-      if (confirm(`Are you sure you want to delete ${selectedItems.size} items?`)) {
-        const localData = await chrome.storage.local.get(["collectedTweets"]);
-        selectedItems.forEach((link) => delete localData.collectedTweets[link]);
-        await chrome.storage.local.set({ collectedTweets: localData.collectedTweets });
-        tweets = Object.values(localData.collectedTweets);
-        selectedItems.clear();
-
-        render(getProcessedTweets());
-        updateStats();
-      }
-    } else if (e.target.id === "bulk-copy") {
-      const links = Array.from(selectedItems)
-        .map((link) => link.replace("x.com", "fixupx.com").replace("twitter.com", "fixupx.com"))
-        .join("\n");
-      navigator.clipboard.writeText(links);
-      alert(`Copied ${selectedItems.size} links to clipboard!`);
-    } else {
-      // If clicked anywhere else, hide context menu
-      contextMenu.classList.add("hidden");
-    }
+    // If clicked anywhere else, hide context menu
+    contextMenu.classList.add("hidden");
   });
 
   grid.addEventListener("click", async (e) => {
@@ -367,10 +335,6 @@ async function loadGallery() {
 
       return;
     }
-    const deleteBtn = e.target.closest(".delete-btn");
-
-    // No longer handling individual button clicks
-    // Logic for done-btn, flag-btn, and copyFx-btn has been removed.
   });
 }
 
