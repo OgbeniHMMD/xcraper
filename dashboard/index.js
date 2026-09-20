@@ -3,7 +3,8 @@ async function loadGallery() {
   let tweets = Object.values(data.collectedTweets || {}); // Keep raw data array
 
   let activeStatusFilter = "all";
-  let selectedItems = new Set(); // Track selected links
+  // let selectedItems = new Set(); // Track selected links
+  let selectedItems = new Set();
 
   const grid = document.getElementById("grid");
   const search = document.getElementById("search");
@@ -216,6 +217,11 @@ async function loadGallery() {
     e.preventDefault();
     const link = card.querySelector(".select-checkbox").getAttribute("data-link");
 
+    const unmarkAllDisplay =
+      selectedItems.size > 0
+        ? `<button class="block w-full text-left px-4 py-2 hover:bg-slate-100 rounded context-action text-blue-600 font-medium" data-action="unmark-all">Unmark All (${selectedItems.size})</button>`
+        : "";
+
     // Set content first so we can calculate size accurately
     contextMenu.innerHTML = `
         <div class="p-1 text-xs">
@@ -228,6 +234,7 @@ async function loadGallery() {
             <button class="block w-full text-left px-4 py-2 hover:bg-slate-100 rounded context-action" data-action="toggle-done">Toggle Done</button>
             <button class="block w-full text-left px-4 py-2 hover:bg-slate-100 rounded context-action" data-action="toggle-flag">Toggle Flag</button>
             <button class="block w-full text-left px-4 py-2 hover:bg-slate-100 rounded text-red-600 context-action" data-action="delete">Delete</button>
+            ${unmarkAllDisplay ? `<hr class="my-1 border-slate-200">${unmarkAllDisplay}` : ""}
         </div>
     `;
 
@@ -263,34 +270,53 @@ async function loadGallery() {
     const contextMenuEl = e.target.closest("#custom-context-menu");
     if (contextMenuEl) {
       const action = e.target.getAttribute("data-action");
-      const link = contextMenu.dataset.link;
+      const targetLink = contextMenu.dataset.link;
+      // If the right-clicked item is in the selection, act on all; otherwise, just the right-clicked item.
+      const linksToActOn = selectedItems.has(targetLink) ? Array.from(selectedItems) : [targetLink];
+
       if (!action) return;
 
       if (action === "open-x") {
-        window.open(link, "_blank");
+        linksToActOn.forEach((link) => window.open(link, "_blank"));
       } else if (action === "copy-link") {
-        navigator.clipboard.writeText(link);
+        navigator.clipboard.writeText(linksToActOn.join("\n"));
       } else if (action === "copy-fixup") {
-        navigator.clipboard.writeText(link.replace("x.com", "fixupx.com").replace("twitter.com", "fixupx.com"));
+        navigator.clipboard.writeText(linksToActOn.map((link) => link.replace("x.com", "fixupx.com").replace("twitter.com", "fixupx.com")).join("\n"));
       } else if (action === "open-tweeload") {
-        window.open(link.replace("x.com", "tweeload.com").replace("twitter.com", "tweeload.com"), "_blank");
+        linksToActOn.forEach((link) => window.open(link.replace("x.com", "tweeload.com").replace("twitter.com", "tweeload.com"), "_blank"));
+      } else if (action === "unmark-all") {
+        selectedItems.clear();
+        updateBulkUI();
+        render(getProcessedTweets());
       } else if (action === "toggle-done" || action === "toggle-flag" || action === "delete") {
         const localData = await chrome.storage.local.get(["collectedTweets"]);
-        if (localData.collectedTweets && localData.collectedTweets[link]) {
-          if (action === "toggle-done") {
-            localData.collectedTweets[link].isDone = !localData.collectedTweets[link].isDone;
-          } else if (action === "toggle-flag") {
-            localData.collectedTweets[link].isFlagged = !localData.collectedTweets[link].isFlagged;
-          } else if (action === "delete") {
-            if (confirm("Are you sure you want to delete this item?")) {
+        let modified = false;
+
+        linksToActOn.forEach((link) => {
+          if (localData.collectedTweets && localData.collectedTweets[link]) {
+            if (action === "toggle-done") {
+              localData.collectedTweets[link].isDone = !localData.collectedTweets[link].isDone;
+              modified = true;
+            } else if (action === "toggle-flag") {
+              localData.collectedTweets[link].isFlagged = !localData.collectedTweets[link].isFlagged;
+              modified = true;
+            } else if (action === "delete") {
               delete localData.collectedTweets[link];
-            } else {
-              contextMenu.classList.add("hidden");
-              return;
+              modified = true;
             }
+          }
+        });
+
+        if (modified) {
+          if (action === "delete" && !confirm(`Are you sure you want to delete ${linksToActOn.length} item(s)?`)) {
+            contextMenu.classList.add("hidden");
+            return;
           }
           await chrome.storage.local.set({ collectedTweets: localData.collectedTweets });
           tweets = Object.values(localData.collectedTweets);
+          // Optional: clear selection after bulk operation
+          // selectedItems.clear();
+          // updateBulkUI();
           render(getProcessedTweets());
           updateStats();
         }
