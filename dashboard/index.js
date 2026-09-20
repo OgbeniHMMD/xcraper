@@ -152,8 +152,14 @@ async function loadGallery() {
   render(getProcessedTweets());
   updateStats();
 
-  search.addEventListener("input", () => render(getProcessedTweets()));
-  sortFilter.addEventListener("change", () => render(getProcessedTweets()));
+  search.addEventListener("input", () => {
+    render(getProcessedTweets());
+    updateMarkAllButtonState();
+  });
+  sortFilter.addEventListener("change", () => {
+    render(getProcessedTweets());
+    updateMarkAllButtonState();
+  });
 
   // Stat card filters
   document.querySelectorAll(".stat-card").forEach((card) => {
@@ -163,6 +169,7 @@ async function loadGallery() {
 
       activeStatusFilter = card.getAttribute("data-filter");
       render(getProcessedTweets());
+      updateMarkAllButtonState();
     });
   });
 
@@ -333,9 +340,49 @@ async function loadGallery() {
       if (e.target.checked) selectedItems.add(link);
       else selectedItems.delete(link);
 
+      updateMarkAllButtonState();
       return;
     }
   });
+
+  // Mark/Unmark All button logic
+  const markAllBtn = document.getElementById("mark-all-btn");
+  const markAllText = document.getElementById("mark-all-text");
+
+  function updateMarkAllButtonState() {
+    const visibleTweets = getProcessedTweets();
+    const totalMarked = selectedItems.size;
+    if (visibleTweets.length === 0) {
+      markAllText.innerText = totalMarked > 0 ? `Unmark All (${totalMarked})` : "Mark All (0)";
+      return;
+    }
+    const allVisibleSelected = visibleTweets.every((t) => selectedItems.has(t.link));
+    if (allVisibleSelected) {
+      markAllText.innerText = `Unmark All (${totalMarked})`;
+    } else {
+      markAllText.innerText = `Mark All (${totalMarked})`;
+    }
+  }
+
+  markAllBtn.addEventListener("click", () => {
+    const visibleTweets = getProcessedTweets();
+    if (visibleTweets.length === 0) return;
+
+    const allVisibleSelected = visibleTweets.every((t) => selectedItems.has(t.link));
+
+    if (allVisibleSelected) {
+      // Unmark all visible
+      visibleTweets.forEach((t) => selectedItems.delete(t.link));
+    } else {
+      // Mark all visible
+      visibleTweets.forEach((t) => selectedItems.add(t.link));
+    }
+
+    updateMarkAllButtonState();
+    render(visibleTweets);
+  });
+
+  updateMarkAllButtonState();
 }
 
 loadGallery();
