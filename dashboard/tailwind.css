@@ -211,6 +211,9 @@
   }
 }
 @layer utilities {
+  .visible {
+    visibility: visible;
+  }
   .stat-card {
     position: relative;
     &::before {

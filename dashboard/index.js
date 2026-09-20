@@ -38,54 +38,38 @@ async function loadGallery() {
         const btnClasses = "text-lg text-slate-800 p-0.5 px-1.5 bg-slate-100 rounded flex items-center justify-center cursor-pointer";
 
         return `
-            <div class="${cardClasses} relative">
-                <input type="checkbox" data-link="${t.link}" ${selectedItems.has(t.link) ? "checked" : ""} class="absolute top-1 left-1 z-50 w-4 h-4 cursor-pointer select-checkbox">
-                <div class="w-full aspect-[3/4] bg-black overflow-hidden relative text-white">
-                    ${
-                      activeStatusFilter == "flagged"
-                        ? `<button data-link="${t.link}" class="${btnClasses} delete-btn absolute z-50 right-1 top-1" title="Hard Delete">
-                            <span class="inline-block align-middle">❌</span>
-                          </button>`
-                        : ""
-                    }
+            <div class="${cardClasses} relative item-card">
+             <label>
+               <input type="checkbox" data-link="${t.link}" ${selectedItems.has(t.link) ? "checked" : ""} class="absolute top-1 left-1 z-50 w-4 h-4 cursor-pointer select-checkbox">
+               <div class="w-full aspect-[3/4] bg-black overflow-hidden relative text-white">
+                   ${
+                     activeStatusFilter == "flagged"
+                       ? `<button data-link="${t.link}" class="${btnClasses} delete-btn absolute z-50 right-1 top-1" title="Hard Delete">
+                           <span class="inline-block align-middle">❌</span>
+                         </button>`
+                       : ""
+                   }
 
-                    ${
-                      t.isFlagged
-                        ? `<div class="z-20 absolute inset-0 bg-red-950/60 flex flex-col items-center justify-center text-white text-[10px] font-bold p-2 text-center">
-                        <span>⚠️</span><span class="mt-1">Flagged</span>
-                        </div>`
-                        : ""
-                    }
+                   ${
+                     t.isFlagged
+                       ? `<div class="z-20 absolute inset-0 bg-red-950/60 flex flex-col items-center justify-center text-white text-[10px] font-bold p-2 text-center">
+                       <span>⚠️</span><span class="mt-1">Flagged</span>
+                       </div>`
+                       : ""
+                   }
 
-                    <img src="${t.thumbnail}" loading="lazy" alt="No Preview" class="w-full h-full object-contain">
-                </div>
+                   <img src="${t.thumbnail}" loading="lazy" alt="No Preview" class="w-full h-full object-contain">
+               </div>
+             </label>
 
-                <div class="p-2 flex flex-col grow">
-                  <div class="text-[8px] font-medium text-slate-400"><strong>${username}</strong> - ${t.time ? new Date(t.time).toLocaleDateString() : "N/A"}</div>
+             <div class="p-2 flex flex-col grow">
+               <div class="text-[8px] font-medium text-slate-400"><strong>${username}</strong> - ${t.time ? new Date(t.time).toLocaleDateString() : "N/A"}</div>
 
-                  <div class="text-[10px] leading-relaxed text-slate-800 py-0.5 line-clamp-2 min-h-[36px] font-normal">${t.text || "[No Text]"}</div>
+               <div class="text-[10px] leading-relaxed text-slate-800 py-0.5 line-clamp-2 min-h-[36px] font-normal">${t.text || "[No Text]"}</div>
 
-                  <div class="text-[8px] font-medium text-slate-400 mb-3">${new Date(t.collectedAt).toLocaleString()}</div>
-
-                  <div class="flex justify-between items-center gap-0.5">
-                    <button data-link="${t.link}" class="${btnClasses} done-btn" title="${t.isDone ? "Mark Pending" : "Mark Done"}">
-                        <span class="inline-block align-middle">${t.isDone ? "✅" : "☑️"}</span>
-                    </button>
-
-                    <a href="${t.link}" target="_blank" class="${btnClasses}" title="View on X">
-                        <span class="inline-block align-middle">🎥 </span>
-                    </a>
-                    <a href="${t.link.replace("x.com", "tweeload.com").replace("twitter.com", "tweeload.com")}" target="_blank" class="${btnClasses}" title="Download Video">
-                        <span class="inline-block align-middle">💾</span>
-                    </a>
-                    <button data-link="${t.link}" class="${btnClasses} copyFx-btn" title="Copy FixupX Link">
-                        <span class="inline-block align-middle">📋</span>
-                    </button>
-                    <button data-link="${t.link}" class="${btnClasses} flag-btn" title="${t.isFlagged ? "Unflag" : "Flag"}">
-                        <span class="inline-block align-middle">🚩</span>
-                    </button>
-                  </div>
-                </div>
+               <div class="text-[8px] font-medium text-slate-400 mb-3">${new Date(t.collectedAt).toLocaleString()}</div>
+               </div>
+             </div>
             </div>
           `;
       })
@@ -182,24 +166,6 @@ async function loadGallery() {
   search.addEventListener("input", () => render(getProcessedTweets()));
   sortFilter.addEventListener("change", () => render(getProcessedTweets()));
 
-  // Undone All logic
-  const undoneAllBtn = document.getElementById("undone-all");
-  undoneAllBtn.addEventListener("click", async () => {
-    if (tweets.length === 0) return;
-    if (confirm("Are you sure you want to mark all items as undone / pending?")) {
-      const localData = await chrome.storage.local.get(["collectedTweets"]);
-      if (localData.collectedTweets) {
-        Object.keys(localData.collectedTweets).forEach((link) => {
-          localData.collectedTweets[link].isDone = false;
-        });
-        await chrome.storage.local.set({ collectedTweets: localData.collectedTweets });
-        tweets = Object.values(localData.collectedTweets);
-        render(getProcessedTweets());
-        updateStats();
-      }
-    }
-  });
-
   // Auto-scroll logic
   const autoScrollBtn = document.getElementById("auto-scroll");
   const scrollIcon = document.getElementById("scroll-icon");
@@ -234,8 +200,6 @@ async function loadGallery() {
     autoScrollBtn.classList.remove("bg-red-50", "border-red-200");
   }
 
-  //
-
   // Right-click context menu
   const contextMenu = document.createElement("div");
   contextMenu.id = "custom-context-menu";
@@ -243,7 +207,7 @@ async function loadGallery() {
   document.body.appendChild(contextMenu);
 
   document.addEventListener("contextmenu", (e) => {
-    const card = e.target.closest(".relative");
+    const card = e.target.closest(".item-card");
     if (!card) {
       contextMenu.classList.add("hidden");
       return;
@@ -252,30 +216,59 @@ async function loadGallery() {
     e.preventDefault();
     const link = card.querySelector(".select-checkbox").getAttribute("data-link");
 
+    // Set content first so we can calculate size accurately
     contextMenu.innerHTML = `
-        <div class="p-1">
+        <div class="p-1 text-xs">
+            <button class="block w-full text-left px-4 py-2 hover:bg-slate-100 rounded context-action" data-action="open-x">Open in X</button>
             <button class="block w-full text-left px-4 py-2 hover:bg-slate-100 rounded context-action" data-action="copy-link">Copy URL</button>
+            <hr class="my-1 border-slate-200">
             <button class="block w-full text-left px-4 py-2 hover:bg-slate-100 rounded context-action" data-action="copy-fixup">Copy FixupX Link</button>
             <button class="block w-full text-left px-4 py-2 hover:bg-slate-100 rounded context-action" data-action="open-tweeload">Open in Tweeload</button>
-            <hr class="my-1 border-slate-100">
-            <button class="block w-full text-left px-4 py-2 hover:bg-slate-100 rounded context-action" data-action="toggle-done">Mark as Done/Pending</button>
-            <button class="block w-full text-left px-4 py-2 hover:bg-slate-100 rounded context-action" data-action="toggle-flag">Flag/Unflag</button>
+            <hr class="my-1 border-slate-200">
+            <button class="block w-full text-left px-4 py-2 hover:bg-slate-100 rounded context-action" data-action="toggle-done">Toggle Done</button>
+            <button class="block w-full text-left px-4 py-2 hover:bg-slate-100 rounded context-action" data-action="toggle-flag">Toggle Flag</button>
             <button class="block w-full text-left px-4 py-2 hover:bg-slate-100 rounded text-red-600 context-action" data-action="delete">Delete</button>
         </div>
     `;
 
-    contextMenu.style.top = `${e.clientY}px`;
-    contextMenu.style.left = `${e.clientX}px`;
+    // Make it visible to calculate size
     contextMenu.classList.remove("hidden");
+
+    const menuWidth = contextMenu.offsetWidth;
+    const menuHeight = contextMenu.offsetHeight;
+    const windowWidth = window.innerWidth;
+    const windowHeight = window.innerHeight;
+
+    // Calculate position, staying within window bounds
+    let x = e.clientX;
+    let y = e.clientY;
+
+    if (x + menuWidth > windowWidth) {
+      x = windowWidth - menuWidth;
+    }
+    if (y + menuHeight > windowHeight) {
+      y = windowHeight - menuHeight;
+    }
+
+    contextMenu.style.top = `${y}px`;
+    contextMenu.style.left = `${x}px`;
     contextMenu.dataset.link = link;
   });
 
+  // Setup the context menu actions and event delegation
+  // Merged the context menu logic and the bulk action logic into a single document click listener
+  // to prevent conflicts and ensure consistent event handling.
   document.addEventListener("click", async (e) => {
-    if (e.target.closest("#custom-context-menu")) {
+    // 1. Context Menu Actions
+    const contextMenuEl = e.target.closest("#custom-context-menu");
+    if (contextMenuEl) {
       const action = e.target.getAttribute("data-action");
       const link = contextMenu.dataset.link;
+      if (!action) return;
 
-      if (action === "copy-link") {
+      if (action === "open-x") {
+        window.open(link, "_blank");
+      } else if (action === "copy-link") {
         navigator.clipboard.writeText(link);
       } else if (action === "copy-fixup") {
         navigator.clipboard.writeText(link.replace("x.com", "fixupx.com").replace("twitter.com", "fixupx.com"));
@@ -302,25 +295,11 @@ async function loadGallery() {
           updateStats();
         }
       }
-
       contextMenu.classList.add("hidden");
-    } else {
-      contextMenu.classList.add("hidden");
+      return;
     }
-  });
 
-  // Set up status filtering click handlers on stats cards
-  document.querySelectorAll(".stat-card").forEach((card) => {
-    card.addEventListener("click", () => {
-      document.querySelectorAll(".stat-card").forEach((c) => c.classList.remove("active"));
-      card.classList.add("active");
-      activeStatusFilter = card.getAttribute("data-filter");
-      render(getProcessedTweets());
-    });
-  });
-
-  document.addEventListener("click", async (e) => {
-    // Handle Bulk Actions
+    // 2. Bulk Actions
     if (e.target.id === "bulk-flag") {
       const localData = await chrome.storage.local.get(["collectedTweets"]);
       selectedItems.forEach((link) => {
@@ -332,8 +311,7 @@ async function loadGallery() {
       updateBulkUI();
       render(getProcessedTweets());
       updateStats();
-    }
-    if (e.target.id === "bulk-delete") {
+    } else if (e.target.id === "bulk-delete") {
       if (confirm(`Are you sure you want to delete ${selectedItems.size} items?`)) {
         const localData = await chrome.storage.local.get(["collectedTweets"]);
         selectedItems.forEach((link) => delete localData.collectedTweets[link]);
@@ -344,13 +322,15 @@ async function loadGallery() {
         render(getProcessedTweets());
         updateStats();
       }
-    }
-    if (e.target.id === "bulk-copy") {
+    } else if (e.target.id === "bulk-copy") {
       const links = Array.from(selectedItems)
         .map((link) => link.replace("x.com", "fixupx.com").replace("twitter.com", "fixupx.com"))
         .join("\n");
       navigator.clipboard.writeText(links);
       alert(`Copied ${selectedItems.size} links to clipboard!`);
+    } else {
+      // If clicked anywhere else, hide context menu
+      contextMenu.classList.add("hidden");
     }
   });
 
@@ -362,79 +342,10 @@ async function loadGallery() {
       updateBulkUI();
       return;
     }
-    const doneBtn = e.target.closest(".done-btn");
-    const flagDeletedBtn = e.target.closest(".flag-btn");
     const deleteBtn = e.target.closest(".delete-btn");
-    const copyFxBtn = e.target.closest(".copyFx-btn");
 
-    // Handle Toggle Mark Done Click
-    if (doneBtn) {
-      const targetLink = doneBtn.getAttribute("data-link");
-      const localData = await chrome.storage.local.get(["collectedTweets"]);
-
-      if (localData.collectedTweets && localData.collectedTweets[targetLink]) {
-        // Toggle state or set to true if it didn't exist yet
-        localData.collectedTweets[targetLink].isDone = !localData.collectedTweets[targetLink].isDone;
-        await chrome.storage.local.set({ collectedTweets: localData.collectedTweets });
-
-        // Synchronize state and trigger processing UI refresh pipeline
-        tweets = Object.values(localData.collectedTweets);
-        render(getProcessedTweets());
-        updateStats();
-      }
-    }
-
-    // Toggle Flag as Deleted
-    if (flagDeletedBtn) {
-      const targetLink = flagDeletedBtn.getAttribute("data-link");
-      const localData = await chrome.storage.local.get(["collectedTweets"]);
-
-      if (localData.collectedTweets && localData.collectedTweets[targetLink]) {
-        localData.collectedTweets[targetLink].isFlagged = !localData.collectedTweets[targetLink].isFlagged;
-        await chrome.storage.local.set({ collectedTweets: localData.collectedTweets });
-
-        tweets = Object.values(localData.collectedTweets);
-        render(getProcessedTweets());
-        updateStats();
-      }
-    }
-
-    if (deleteBtn) {
-      // const targetLink = deleteBtn.getAttribute("data-link");
-      // const localData = await chrome.storage.local.get(["collectedTweets"]);
-      // if (localData.collectedTweets && localData.collectedTweets[targetLink]) {
-      //   delete localData.collectedTweets[targetLink];
-      //   await chrome.storage.local.set({ collectedTweets: localData.collectedTweets });
-      //   tweets = Object.values(localData.collectedTweets);
-      //   render(getProcessedTweets());
-      //   updateStats();
-      // }
-    }
-
-    if (copyFxBtn) {
-      const targetLink = copyFxBtn.getAttribute("data-link");
-      const fxLink = targetLink.replace("x.com", "fixupx.com").replace("twitter.com", "fixupx.com");
-
-      navigator.clipboard
-        .writeText(fxLink)
-        .then(() => {
-          copyFxBtn.classList.remove("text-slate-800", "border-slate-200");
-          copyFxBtn.classList.add("text-emerald-600", "border-emerald-500", "bg-emerald-50");
-          setTimeout(() => {
-            copyFxBtn.classList.add("text-slate-800", "border-slate-200");
-            copyFxBtn.classList.remove("text-emerald-600", "border-emerald-500", "bg-emerald-50");
-          }, 1000);
-        })
-        .catch((err) => {
-          copyFxBtn.classList.remove("text-slate-800", "border-slate-200");
-          copyFxBtn.classList.add("text-red-600", "border-red-500", "bg-red-50");
-          setTimeout(() => {
-            copyFxBtn.classList.add("text-slate-800", "border-slate-200");
-            copyFxBtn.classList.remove("text-red-600", "border-red-500", "bg-red-50");
-          }, 1000);
-          console.error("Clipboard copy failed: ", err);
-        });
-    }
+    // No longer handling individual button clicks
+    // Logic for done-btn, flag-btn, and copyFx-btn has been removed.
   });
 }
 
