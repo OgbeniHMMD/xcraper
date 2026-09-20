@@ -89,6 +89,8 @@ async function loadGallery() {
     } else if (activeStatusFilter === "today") {
       const todayStr = new Date().toDateString();
       result = result.filter((t) => new Date(t.collectedAt).toDateString() === todayStr);
+    } else if (activeStatusFilter === "deleted") {
+      result = result.filter((t) => t.isDeleted);
     }
 
     // 2. Filter by search query (Checking both text AND username)
@@ -143,11 +145,13 @@ async function loadGallery() {
     // Calculate items collected within the current calendar day
     const todayStr = new Date().toDateString();
     const todayCount = tweets.filter((t) => new Date(t.collectedAt).toDateString() === todayStr).length;
+    const deletedCount = tweets.filter((t) => t.isDeleted).length;
 
     document.getElementById("stat-total").innerText = totalCount;
     document.getElementById("stat-pending").innerText = pendingCount;
     document.getElementById("stat-done").innerText = doneCount;
     document.getElementById("stat-today").innerText = todayCount;
+    document.getElementById("stat-deleted").innerText = deletedCount;
   };
 
   render(getProcessedTweets());
