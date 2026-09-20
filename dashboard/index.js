@@ -137,12 +137,12 @@ async function loadGallery() {
   };
 
   const updateBulkUI = () => {
-    if (selectedItems.size > 0) {
-      bulkActionsContainer.classList.remove("hidden");
-      selectedCountEl.innerText = `${selectedItems.size} selected`;
-    } else {
-      bulkActionsContainer.classList.add("hidden");
-    }
+    // if (selectedItems.size > 0) {
+    //   bulkActionsContainer.classList.remove("hidden");
+    //   selectedCountEl.innerText = `${selectedItems.size} selected`;
+    // } else {
+    //   bulkActionsContainer.classList.add("hidden");
+    // }
   };
 
   const updateStats = () => {
@@ -286,7 +286,7 @@ async function loadGallery() {
         linksToActOn.forEach((link) => window.open(link.replace("x.com", "tweeload.com").replace("twitter.com", "tweeload.com"), "_blank"));
       } else if (action === "unmark-all") {
         selectedItems.clear();
-        updateBulkUI();
+
         render(getProcessedTweets());
       } else if (action === "toggle-done" || action === "toggle-flag" || action === "delete") {
         const localData = await chrome.storage.local.get(["collectedTweets"]);
@@ -316,7 +316,6 @@ async function loadGallery() {
           tweets = Object.values(localData.collectedTweets);
           // Optional: clear selection after bulk operation
           // selectedItems.clear();
-          // updateBulkUI();
           render(getProcessedTweets());
           updateStats();
         }
@@ -334,7 +333,7 @@ async function loadGallery() {
       await chrome.storage.local.set({ collectedTweets: localData.collectedTweets });
       tweets = Object.values(localData.collectedTweets);
       selectedItems.clear();
-      updateBulkUI();
+
       render(getProcessedTweets());
       updateStats();
     } else if (e.target.id === "bulk-delete") {
@@ -344,7 +343,7 @@ async function loadGallery() {
         await chrome.storage.local.set({ collectedTweets: localData.collectedTweets });
         tweets = Object.values(localData.collectedTweets);
         selectedItems.clear();
-        updateBulkUI();
+
         render(getProcessedTweets());
         updateStats();
       }
@@ -365,7 +364,7 @@ async function loadGallery() {
       const link = e.target.getAttribute("data-link");
       if (e.target.checked) selectedItems.add(link);
       else selectedItems.delete(link);
-      updateBulkUI();
+
       return;
     }
     const deleteBtn = e.target.closest(".delete-btn");
