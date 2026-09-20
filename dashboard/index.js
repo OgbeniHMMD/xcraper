@@ -67,7 +67,10 @@ async function loadGallery() {
                     <button data-link="${t.link}" class="${btnClasses} copyFx-btn" title="Copy FixupX Link">
                         <span class="inline-block align-middle">📋</span>
                     </button>
-                    <button data-link="${t.link}" class="${btnClasses} delete-btn" title="Delete">
+                    <button data-link="${t.link}" class="${btnClasses} flag-btn" title="${t.isDeleted ? "Unflag Deleted" : "Flag as Deleted"}">
+                        <span class="inline-block align-middle">${t.isDeleted ? "♻️" : "🗑️"}</span>
+                    </button>
+                    <button data-link="${t.link}" class="${btnClasses} delete-btn" title="Hard Delete">
                         <span class="inline-block align-middle">❌</span>
                     </button>
                   </div>
@@ -147,6 +150,9 @@ async function loadGallery() {
     const todayCount = tweets.filter((t) => new Date(t.collectedAt).toDateString() === todayStr).length;
     const deletedCount = tweets.filter((t) => t.isDeleted).length;
 
+    console.log({ xx: tweets.filter((t) => t.isDeleted) });
+    console.log({ deletedCount });
+
     document.getElementById("stat-total").innerText = totalCount;
     document.getElementById("stat-pending").innerText = pendingCount;
     document.getElementById("stat-done").innerText = doneCount;
@@ -222,56 +228,9 @@ async function loadGallery() {
     });
   });
 
-  // Check Deletions / Thumbnail Health Check logic
-  const checkHealthBtn = document.getElementById("check-health");
-  const healthText = document.getElementById("health-text");
-
-  checkHealthBtn.addEventListener("click", async () => {
-    if (tweets.length === 0) {
-      alert("No saved videos to check!");
-      return;
-    }
-
-    healthText.innerText = "Checking...";
-    checkHealthBtn.classList.add("bg-blue-50", "border-blue-300");
-
-    const localData = await chrome.storage.local.get(["collectedTweets"]);
-    let tweetsObj = localData.collectedTweets || {};
-    let updated = false;
-
-    for (const [link, tweet] of Object.entries(tweetsObj)) {
-      if (!tweet.thumbnail) continue;
-
-      // Test loading thumbnail image via Image probe
-      const isActive = await new Promise((resolve) => {
-        const img = new Image();
-        img.onload = () => resolve(true);
-        img.onerror = () => resolve(false);
-        img.src = tweet.thumbnail;
-        setTimeout(() => resolve(false), 6000); // 6s timeout
-      });
-
-      const isCurrentlyDeleted = !isActive;
-      if (tweet.isDeleted !== isCurrentlyDeleted) {
-        tweetsObj[link].isDeleted = isCurrentlyDeleted;
-        updated = true;
-      }
-    }
-
-    if (updated) {
-      await chrome.storage.local.set({ collectedTweets: tweetsObj });
-      tweets = Object.values(tweetsObj);
-      render(getProcessedTweets());
-      updateStats();
-    }
-
-    healthText.innerText = "Check Deletions";
-    checkHealthBtn.classList.remove("bg-blue-50", "border-blue-300");
-    alert("Thumbnail and deletion check complete!");
-  });
-
   grid.addEventListener("click", async (e) => {
     const doneBtn = e.target.closest(".done-btn");
+    const flagDeletedBtn = e.target.closest(".flag-btn");
     const deleteBtn = e.target.closest(".delete-btn");
     const copyFxBtn = e.target.closest(".copyFx-btn");
 
@@ -286,6 +245,21 @@ async function loadGallery() {
         await chrome.storage.local.set({ collectedTweets: localData.collectedTweets });
 
         // Synchronize state and trigger processing UI refresh pipeline
+        tweets = Object.values(localData.collectedTweets);
+        render(getProcessedTweets());
+        updateStats();
+      }
+    }
+
+    // Toggle Flag as Deleted
+    if (flagDeletedBtn) {
+      const targetLink = flagDeletedBtn.getAttribute("data-link");
+      const localData = await chrome.storage.local.get(["collectedTweets"]);
+
+      if (localData.collectedTweets && localData.collectedTweets[targetLink]) {
+        localData.collectedTweets[targetLink].isDeleted = !localData.collectedTweets[targetLink].isDeleted;
+        await chrome.storage.local.set({ collectedTweets: localData.collectedTweets });
+
         tweets = Object.values(localData.collectedTweets);
         render(getProcessedTweets());
         updateStats();
