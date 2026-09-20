@@ -11,35 +11,35 @@
 
       <div class="gap-4 grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] mb-6">
         <div
-          class="relative flex flex-col justify-center bg-white hover:shadow-md p-5 border border-slate-200 hover:border-slate-300 overflow-hidden transition-all hover:-translate-y-0.5 active:translate-y-0 duration-200 cursor-pointer stat-card active"
+          class="relative flex flex-col justify-center bg-white hover:shadow-md p-5 border border-slate-200 hover:border-slate-300 overflow-hidden hover:-translate-y-0.5 active:translate-y-0 duration-200 cursor-pointer stat-card active"
           data-filter="all"
         >
           <div id="stat-total" class="mb-1.5 font-bold text-slate-900 text-3xl leading-none">0</div>
           <div class="font-semibold text-[11px] text-slate-500 uppercase tracking-wider">Total Items</div>
         </div>
         <div
-          class="relative flex flex-col justify-center bg-white hover:shadow-md p-5 border border-slate-200 hover:border-slate-300 overflow-hidden transition-all hover:-translate-y-0.5 active:translate-y-0 duration-200 cursor-pointer stat-card pending"
+          class="relative flex flex-col justify-center bg-white hover:shadow-md p-5 border border-slate-200 hover:border-slate-300 overflow-hidden hover:-translate-y-0.5 active:translate-y-0 duration-200 cursor-pointer stat-card pending"
           data-filter="pending"
         >
           <div id="stat-pending" class="mb-1.5 font-bold text-amber-500 text-3xl leading-none">0</div>
           <div class="font-semibold text-[11px] text-slate-500 uppercase tracking-wider">Pending</div>
         </div>
         <div
-          class="relative flex flex-col justify-center bg-white hover:shadow-md p-5 border border-slate-200 hover:border-slate-300 overflow-hidden transition-all hover:-translate-y-0.5 active:translate-y-0 duration-200 cursor-pointer stat-card done"
+          class="relative flex flex-col justify-center bg-white hover:shadow-md p-5 border border-slate-200 hover:border-slate-300 overflow-hidden hover:-translate-y-0.5 active:translate-y-0 duration-200 cursor-pointer stat-card done"
           data-filter="done"
         >
           <div id="stat-done" class="mb-1.5 font-bold text-emerald-500 text-3xl leading-none">0</div>
           <div class="font-semibold text-[11px] text-slate-500 uppercase tracking-wider">Done</div>
         </div>
         <div
-          class="relative flex flex-col justify-center bg-white hover:shadow-md p-5 border border-slate-200 hover:border-slate-300 overflow-hidden transition-all hover:-translate-y-0.5 active:translate-y-0 duration-200 cursor-pointer stat-card today"
+          class="relative flex flex-col justify-center bg-white hover:shadow-md p-5 border border-slate-200 hover:border-slate-300 overflow-hidden hover:-translate-y-0.5 active:translate-y-0 duration-200 cursor-pointer stat-card today"
           data-filter="today"
         >
           <div id="stat-today" class="mb-1.5 font-bold text-blue-500 text-3xl leading-none">0</div>
           <div class="font-semibold text-[11px] text-slate-500 uppercase tracking-wider">Saved Today</div>
         </div>
         <div
-          class="relative flex flex-col justify-center bg-white hover:shadow-md p-5 border border-slate-200 hover:border-slate-300 overflow-hidden transition-all hover:-translate-y-0.5 active:translate-y-0 duration-200 cursor-pointer stat-card deleted"
+          class="relative flex flex-col justify-center bg-white hover:shadow-md p-5 border border-slate-200 hover:border-slate-300 overflow-hidden hover:-translate-y-0.5 active:translate-y-0 duration-200 cursor-pointer stat-card deleted"
           data-filter="flagged"
         >
           <div id="stat-flagged" class="mb-1.5 font-bold text-rose-500 text-3xl leading-none">0</div>
@@ -57,12 +57,12 @@
             type="search"
             id="search"
             placeholder="Search saved videos..."
-            class="box-border bg-white px-3.5 py-2 pl-10 border border-slate-200 focus:border-blue-500 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 w-full text-slate-900 text-sm transition-all"
+            class="box-border bg-white px-3.5 py-2 pl-10 border border-slate-200 focus:border-blue-500 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 w-full text-slate-900 text-sm"
           />
         </div>
         <select
           id="sort-filter"
-          class="bg-white px-3.5 py-2 border border-slate-200 focus:border-blue-500 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 h-[38px] text-slate-900 text-sm transition-all cursor-pointer"
+          class="bg-white px-3.5 py-2 border border-slate-200 focus:border-blue-500 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 h-[38px] text-slate-900 text-sm cursor-pointer"
         >
           <option value="collected-newest">Collected: Newest First</option>
           <option value="collected-oldest">Collected: Oldest First</option>
@@ -72,7 +72,7 @@
 
         <button
           id="auto-scroll"
-          class="flex items-center gap-2 bg-white hover:bg-slate-50 px-3.5 py-2 border border-slate-200 focus:border-blue-500 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 h-[38px] text-slate-900 text-sm transition-all cursor-pointer"
+          class="flex items-center gap-2 bg-white hover:bg-slate-50 px-3.5 py-2 border border-slate-200 focus:border-blue-500 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 h-[38px] text-slate-900 text-sm cursor-pointer"
           title="Auto-scroll to cache thumbnails"
         >
           <span id="scroll-icon">⏬</span>
@@ -81,13 +81,21 @@
 
         <button
           id="mark-all-btn"
-          class="flex items-center gap-2 bg-white hover:bg-slate-50 px-3.5 py-2 border border-slate-200 focus:border-blue-500 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 h-[38px] text-slate-900 text-sm transition-all cursor-pointer"
+          class="flex items-center gap-2 bg-white hover:bg-slate-50 px-3.5 py-2 border border-slate-200 focus:border-blue-500 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 h-[38px] text-slate-900 text-sm cursor-pointer"
           title="Mark/Unmark All currently visible items"
         >
           <span>☑️</span>
           <span id="mark-all-text">Mark All</span>
         </button>
       </div>
+
+      <button
+        id="jump-to-top"
+        title="Jump to Top"
+        class="fixed z-50 right-4 bottom-4 bg-purple-600/75 hover:bg-purple-600 size-16 border border-slate-200 rounded-full text-slate-900 text-lg cursor-pointer"
+      >
+        ⏫
+      </button>
 
       <div id="grid" class="gap-4 grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))]"></div>
     </div>

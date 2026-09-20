@@ -177,8 +177,13 @@ async function loadGallery() {
   const autoScrollBtn = document.getElementById("auto-scroll");
   const scrollIcon = document.getElementById("scroll-icon");
   const scrollText = document.getElementById("scroll-text");
+  const jumpToTopBtn = document.getElementById("jump-to-top");
   let isScrolling = false;
   let scrollInterval;
+
+  jumpToTopBtn.addEventListener("click", () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
 
   autoScrollBtn.addEventListener("click", () => {
     isScrolling = !isScrolling;
