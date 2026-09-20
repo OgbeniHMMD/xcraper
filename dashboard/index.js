@@ -37,14 +37,20 @@ async function loadGallery() {
         return `
             <div class="${cardClasses}">
                 <div class="w-full aspect-[3/4] bg-black overflow-hidden relative text-white">
-                    <button data-link="${t.link}" class="${btnClasses} delete-btn absolute z-50 right-1 top-1" title="Hard Delete">
-                        <span class="inline-block align-middle">❌</span>
-                    </button>
+                    ${
+                      activeStatusFilter == "flagged"
+                        ? `<button data-link="${t.link}" class="${btnClasses} delete-btn absolute z-50 right-1 top-1" title="Hard Delete">
+                            <span class="inline-block align-middle">❌</span>
+                          </button>`
+                        : ""
+                    }
 
                     ${
                       t.isFlagged
-                        ? `<div class="z-20 absolute  inset-0 bg-red-950/60 flex flex-col items-center justify-center text-white text-[10px] font-bold p-2 text-center"><span>⚠️</span><span class="mt-1">Flagged</span></div>`
-                        : ``
+                        ? `<div class="z-20 absolute inset-0 bg-red-950/60 flex flex-col items-center justify-center text-white text-[10px] font-bold p-2 text-center">
+                        <span>⚠️</span><span class="mt-1">Flagged</span>
+                        </div>`
+                        : ""
                     }
 
                     <img src="${t.thumbnail}" loading="lazy" alt="No Preview" class="w-full h-full object-contain">
@@ -264,17 +270,15 @@ async function loadGallery() {
     }
 
     if (deleteBtn) {
-      const targetLink = deleteBtn.getAttribute("data-link");
-      const localData = await chrome.storage.local.get(["collectedTweets"]);
-
-      if (localData.collectedTweets && localData.collectedTweets[targetLink]) {
-        delete localData.collectedTweets[targetLink];
-        await chrome.storage.local.set({ collectedTweets: localData.collectedTweets });
-
-        tweets = Object.values(localData.collectedTweets);
-        render(getProcessedTweets());
-        updateStats();
-      }
+      // const targetLink = deleteBtn.getAttribute("data-link");
+      // const localData = await chrome.storage.local.get(["collectedTweets"]);
+      // if (localData.collectedTweets && localData.collectedTweets[targetLink]) {
+      //   delete localData.collectedTweets[targetLink];
+      //   await chrome.storage.local.set({ collectedTweets: localData.collectedTweets });
+      //   tweets = Object.values(localData.collectedTweets);
+      //   render(getProcessedTweets());
+      //   updateStats();
+      // }
     }
 
     if (copyFxBtn) {
