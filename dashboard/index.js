@@ -41,14 +41,6 @@ async function loadGallery() {
                <input type="checkbox" data-link="${t.link}" ${selectedItems.has(t.link) ? "checked" : ""} class="absolute top-1 left-1 z-50 w-4 h-4 cursor-pointer select-checkbox">
                <div class="w-full aspect-[3/4] bg-black overflow-hidden relative text-white">
                    ${
-                     activeStatusFilter == "flagged"
-                       ? `<button data-link="${t.link}" class="${btnClasses} delete-btn absolute z-50 right-1 top-1" title="Hard Delete">
-                           <span class="inline-block align-middle">❌</span>
-                         </button>`
-                       : ""
-                   }
-
-                   ${
                      t.isFlagged
                        ? `<div class="z-20 absolute inset-0 bg-red-950/60 flex flex-col items-center justify-center text-white text-[10px] font-bold p-2 text-center">
                        <span>⚠️</span><span class="mt-1">Flagged</span>
@@ -79,7 +71,7 @@ async function loadGallery() {
     // 1. Filter by status filter
     let result = tweets;
     if (activeStatusFilter === "pending") {
-      result = result.filter((t) => !t.isDone);
+      result = result.filter((t) => !t.isDone && !t.isFlagged);
     } else if (activeStatusFilter === "done") {
       result = result.filter((t) => t.isDone);
     } else if (activeStatusFilter === "today") {
@@ -136,12 +128,10 @@ async function loadGallery() {
   const updateStats = () => {
     const totalCount = tweets.length;
     const doneCount = tweets.filter((t) => t.isDone).length;
-    const pendingCount = totalCount - doneCount;
-
-    // Calculate items collected within the current calendar day
     const todayStr = new Date().toDateString();
     const todayCount = tweets.filter((t) => new Date(t.collectedAt).toDateString() === todayStr).length;
     const flaggedCount = tweets.filter((t) => t.isFlagged).length;
+    const pendingCount = tweets.filter((t) => !t.isDone && !t.isFlagged).length;
     document.getElementById("stat-total").innerText = totalCount;
     document.getElementById("stat-pending").innerText = pendingCount;
     document.getElementById("stat-done").innerText = doneCount;
@@ -245,7 +235,7 @@ async function loadGallery() {
             <hr class="my-1 border-slate-200">
             <button class="block w-full text-left px-4 py-2 hover:bg-slate-100 rounded context-action" data-action="toggle-done">Toggle Done</button>
             <button class="block w-full text-left px-4 py-2 hover:bg-slate-100 rounded context-action" data-action="toggle-flag">Toggle Flag</button>
-            <button class="block w-full text-left px-4 py-2 hover:bg-slate-100 rounded text-red-600 context-action" data-action="delete">Delete</button>
+            ${activeStatusFilter === "flagged" ? `<button class="block w-full text-left px-4 py-2 hover:bg-slate-100 rounded text-red-600 context-action" data-action="delete">Delete</button>` : ""}
             ${unmarkAllDisplay ? `<hr class="my-1 border-slate-200">${unmarkAllDisplay}` : ""}
         </div>
     `;
