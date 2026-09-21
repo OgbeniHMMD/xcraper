@@ -276,12 +276,29 @@ async function loadGallery() {
   const scrollIcon = document.getElementById("scroll-icon");
   const scrollText = document.getElementById("scroll-text");
   const jumpToTopBtn = document.getElementById("jump-to-top");
+  const jumpToBottomBtn = document.getElementById("jump-to-bottom");
   let isScrolling = false;
   let scrollInterval;
 
+  const scrollContainer = document.getElementById("scroll-container") || window;
+
   if (jumpToTopBtn) {
     jumpToTopBtn.addEventListener("click", () => {
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      if (scrollContainer === window) {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      } else {
+        scrollContainer.scrollTo({ top: 0, behavior: "smooth" });
+      }
+    });
+  }
+
+  if (jumpToBottomBtn) {
+    jumpToBottomBtn.addEventListener("click", () => {
+      if (scrollContainer === window) {
+        window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+      } else {
+        scrollContainer.scrollTo({ top: scrollContainer.scrollHeight, behavior: "smooth" });
+      }
     });
   }
 
@@ -290,14 +307,21 @@ async function loadGallery() {
       isScrolling = !isScrolling;
 
       if (isScrolling) {
-        if (scrollIcon) scrollIcon.innerText = "🛑";
+        if (scrollIcon) scrollIcon.innerText = "⏹";
         if (scrollText) scrollText.innerText = "Stop Scroll";
         autoScrollBtn.classList.add("bg-red-50", "border-red-200");
 
         scrollInterval = setInterval(() => {
-          window.scrollBy(0, 10);
-          if (window.innerHeight + window.scrollY >= document.body.offsetHeight) {
-            stopScrolling();
+          if (scrollContainer === window) {
+            window.scrollBy(0, 10);
+            if (window.innerHeight + window.scrollY >= document.body.offsetHeight) {
+              stopScrolling();
+            }
+          } else {
+            scrollContainer.scrollBy(0, 10);
+            if (scrollContainer.scrollTop + scrollContainer.clientHeight >= scrollContainer.scrollHeight) {
+              stopScrolling();
+            }
           }
         }, 20);
       } else {
@@ -309,7 +333,7 @@ async function loadGallery() {
   function stopScrolling() {
     isScrolling = false;
     clearInterval(scrollInterval);
-    if (scrollIcon) scrollIcon.innerText = "⏬";
+    if (scrollIcon) scrollIcon.innerText = "▶";
     if (scrollText) scrollText.innerText = "Auto Scroll";
     if (autoScrollBtn) autoScrollBtn.classList.remove("bg-red-50", "border-red-200");
   }
