@@ -133,6 +133,8 @@ async function loadGallery() {
       card.classList.add("active", "border-indigo-500", "ring-2", "ring-indigo-100");
 
       activeStatusFilter = card.getAttribute("data-filter");
+      search.value = "";
+      selectedItems.clear();
       render(getProcessedTweets());
       updateMarkAllButtonState();
     });
@@ -227,11 +229,14 @@ async function loadGallery() {
               modified = true;
             } else if (action === "delete") {
               delete localData.collectedTweets[link];
-              selectedItems.delete(link);
               modified = true;
             }
           }
         });
+
+        if (action === "toggle-flag" || action === "delete") {
+          selectedItems.clear();
+        }
 
         if (modified) {
           await chrome.storage.local.set({ collectedTweets: localData.collectedTweets });
