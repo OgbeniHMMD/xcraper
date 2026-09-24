@@ -234,7 +234,7 @@ async function loadGallery() {
           }
         });
 
-        if (action === "toggle-flag" || action === "delete") {
+        if (action === "toggle-flag" || action === "toggle-done" || action === "delete") {
           selectedItems.clear();
         }
 
