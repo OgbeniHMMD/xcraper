@@ -21,6 +21,26 @@ async function loadGallery() {
     }
   };
 
+  // Compact relative time, e.g. "3h ago"; falls back to a date for old items.
+  const timeAgo = (value) => {
+    if (!value) return "";
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "";
+    const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
+    if (seconds < 60) return "just now";
+    for (const [suffix, secs] of [
+      ["y", 31536000],
+      ["mo", 2592000],
+      ["d", 86400],
+      ["h", 3600],
+      ["m", 60],
+    ]) {
+      const count = Math.floor(seconds / secs);
+      if (count >= 1) return `${count}${suffix} ago`;
+    }
+    return date.toLocaleDateString();
+  };
+
   // Broken-thumbnail detection. `alt` is static, so it can't tell us if an
   // image actually loaded. We rely on the image `error` event / naturalWidth
   // and record the results here.
@@ -78,30 +98,34 @@ async function loadGallery() {
     grid.innerHTML = items
       .map((t) => {
         const username = getUsername(t.link);
-        const cardClasses = `bg-white overflow-hidden flex flex-col border border-slate-200 hover:border-slate-900 ${
-          t.isFlagged ? "outline-2 outline-red-500 bg-red-50/20" : t.isDone ? "outline-2 outline-emerald-500" : ""
+        const cardClasses = `group relative item-card flex flex-col overflow-hidden rounded-xl bg-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${
+          t.isFlagged ? "border border-red-300 ring-1 ring-red-500/60" : t.isDone ? "border border-emerald-300 ring-1 ring-emerald-500/60" : "border border-slate-200 hover:border-slate-300"
         }`;
 
+        const statusBadge = t.isFlagged
+          ? `<span class="absolute top-2 right-2 z-20 inline-flex items-center gap-1 rounded-full bg-red-600/90 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-white shadow-sm">⚑ Flagged</span>`
+          : t.isDone
+            ? `<span class="absolute top-2 right-2 z-20 inline-flex items-center gap-1 rounded-full bg-emerald-600/90 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-white shadow-sm">✓ Done</span>`
+            : "";
+
         return `
-          <div class="${cardClasses} relative item-card">
-           <label>
-             <input type="checkbox" data-link="${t.link}" ${selectedItems.has(t.link) ? "checked" : ""} class="absolute top-1 left-1 z-50 w-4 h-4 cursor-pointer select-checkbox">
-             <div class="w-full aspect-[3/4] bg-black overflow-hidden relative text-white">
-                 ${
-                   t.isFlagged
-                     ? `<div class="z-20 absolute inset-0 bg-red-950/60 flex flex-col items-center justify-center text-white text-[10px] font-bold p-2 text-center">
-                     <span>⚠️</span><span class="mt-1">Flagged</span>
-                     </div>`
-                     : ""
-                 }
-                 <img src="${t.thumbnail || ""}" data-link="${t.link}" loading="lazy" alt="No Preview" class="w-full h-full object-contain">
-             </div>
-           </label>
-           <div class="p-2 flex flex-col grow">
-             <div class="text-[8px] font-medium text-slate-400"><strong>${username}</strong> - ${t.time ? new Date(t.time).toLocaleDateString() : "N/A"}</div>
-             <div class="text-[10px] leading-relaxed text-slate-800 py-0.5 line-clamp-2 min-h-[36px] font-normal">${t.text || "[No Text]"}</div>
-             <div class="text-[8px] font-medium text-slate-400 mb-3">${t.collectedAt ? new Date(t.collectedAt).toLocaleString() : ""}</div>
-           </div>
+          <div class="${cardClasses}">
+            <label class="block cursor-pointer">
+              <input type="checkbox" data-link="${t.link}" ${selectedItems.has(t.link) ? "checked" : ""} class="select-checkbox card-checkbox peer">
+              <div class="relative aspect-3/4 w-full overflow-hidden bg-slate-900 peer-checked:ring-2 peer-checked:ring-inset peer-checked:ring-blue-500">
+                <div class="pointer-events-none absolute inset-x-0 top-0 z-10 h-14 bg-linear-to-b from-black/60 to-transparent"></div>
+                ${statusBadge}
+                <img src="${t.thumbnail || ""}" data-link="${t.link}" loading="lazy" alt="No Preview" class="h-full w-full object-contain transition-transform duration-300 group-hover:scale-[1.03]">
+              </div>
+            </label>
+            <div class="flex grow flex-col gap-1 p-2.5">
+              <div class="flex items-center justify-between gap-2">
+                <span class="truncate text-[11px] font-semibold text-slate-700">${username}</span>
+                <span class="shrink-0 text-[10px] font-medium tabular-nums text-slate-400" title="${t.time ? new Date(t.time).toLocaleString() : "Unknown post time"}">${t.time ? timeAgo(t.time) : "N/A"}</span>
+              </div>
+              <p class="line-clamp-2 text-[11px] leading-snug text-slate-600">${t.text || "[No Text]"}</p>
+              <div class="mt-auto pt-0.5 text-[10px] text-slate-400" title="${t.collectedAt ? new Date(t.collectedAt).toLocaleString() : ""}">Saved ${timeAgo(t.collectedAt) || "unknown"}</div>
+            </div>
           </div>
         `;
       })
