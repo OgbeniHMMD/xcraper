@@ -19,6 +19,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 async function startPersistentCollection() {
   console.log("%c Auto-Collector Started...", "color: #1DA1F2; font-weight: bold;");
 
+  // Show the green "scraping in progress" indicator on the toolbar icon
+  chrome.runtime.sendMessage({ action: "update_badge" });
+
   let lastHeight = 0;
   let stopCount = 0;
 
