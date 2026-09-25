@@ -183,12 +183,16 @@ async function loadGallery() {
     updateMarkAllButtonState();
   });
 
-  document.querySelectorAll(".stat-card").forEach((card) => {
-    card.addEventListener("click", async () => {
-      document.querySelectorAll(".stat-card").forEach((c) => c.classList.remove("active", "border-indigo-500", "ring-2", "ring-indigo-100"));
-      card.classList.add("active", "border-indigo-500", "ring-2", "ring-indigo-100");
+  document.querySelectorAll(".filter-chip").forEach((chip) => {
+    chip.addEventListener("click", async () => {
+      document.querySelectorAll(".filter-chip").forEach((c) => {
+        c.classList.remove("active");
+        c.setAttribute("aria-pressed", "false");
+      });
+      chip.classList.add("active");
+      chip.setAttribute("aria-pressed", "true");
 
-      activeStatusFilter = card.getAttribute("data-filter");
+      activeStatusFilter = chip.getAttribute("data-filter");
       search.value = "";
       selectedItems.clear();
 

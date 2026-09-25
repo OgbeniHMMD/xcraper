@@ -6,35 +6,54 @@
   --color-x-red: #e0245e;
 }
 
-@utility stat-card {
-  position: relative;
-  &::before {
-    content: "";
-    @apply top-0 right-0 left-0 absolute bg-transparent h-1 transition-[height] duration-200;
+@utility filter-chip {
+  @apply inline-flex items-center gap-1.5 bg-white px-3 border border-slate-200 rounded-full h-8 font-medium text-slate-600 text-sm whitespace-nowrap select-none cursor-pointer transition-colors;
+  &:hover {
+    @apply border-slate-300 bg-slate-50;
   }
-  &.pending::before {
+  &:focus-visible {
+    @apply outline-none ring-2 ring-blue-400 ring-offset-1;
+  }
+
+  .chip-dot {
+    @apply w-1.5 h-1.5 rounded-full bg-slate-300 shrink-0;
+  }
+  .chip-count {
+    @apply font-semibold text-slate-800 tabular-nums;
+  }
+
+  &.pending .chip-dot {
     @apply bg-amber-500;
   }
-  &.done::before {
+  &.done .chip-dot {
     @apply bg-emerald-500;
   }
-  &.today::before {
+  &.today .chip-dot {
     @apply bg-blue-500;
+  }
+  &.flagged .chip-dot {
+    @apply bg-rose-500;
+  }
+  &.broken .chip-dot {
+    @apply bg-red-600;
   }
 
   &.active {
-    @apply bg-slate-50 border-slate-900;
-    &::before {
-      @apply h-1.5;
-    }
-    &.pending {
-      @apply border-amber-500 bg-amber-500/[0.04];
-    }
-    &.done {
-      @apply border-emerald-500 bg-emerald-500/[0.04];
-    }
-    &.today {
-      @apply border-blue-500 bg-blue-500/[0.04];
-    }
+    @apply border-slate-900 bg-slate-100 text-slate-900;
+  }
+  &.active.pending {
+    @apply border-amber-500 bg-amber-500/10;
+  }
+  &.active.done {
+    @apply border-emerald-500 bg-emerald-500/10;
+  }
+  &.active.today {
+    @apply border-blue-500 bg-blue-500/10;
+  }
+  &.active.flagged {
+    @apply border-rose-500 bg-rose-500/10;
+  }
+  &.active.broken {
+    @apply border-red-600 bg-red-600/10;
   }
 }

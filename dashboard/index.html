@@ -7,66 +7,25 @@
   </head>
   <body class="bg-slate-50 m-0 p-4 h-screen overflow-hidden flex flex-col text-slate-900">
     <div class="mx-auto max-w-400 w-full flex flex-col h-full overflow-hidden">
-      <h2 class="mt-0 mb-3 font-bold text-slate-900 text-xl shrink-0">Collected Videos</h2>
+      <div class="flex flex-wrap items-center gap-3 mb-3 shrink-0">
+        <h2 class="mr-auto font-bold text-slate-900 text-xl">Collected Videos</h2>
 
-      <div class="gap-3 grid grid-cols-[repeat(auto-fit,minmax(130px,1fr))] mb-3 shrink-0">
-        <div
-          class="relative flex flex-col justify-center bg-white hover:shadow-md p-3 border border-slate-200 hover:border-slate-300 overflow-hidden cursor-pointer stat-card active"
-          data-filter="all"
-        >
-          <div id="stat-total" class="mb-1 font-bold text-slate-900 text-2xl leading-none">0</div>
-          <div class="font-semibold text-[10px] text-slate-500 uppercase tracking-wider">Total Items</div>
-        </div>
-        <div
-          class="relative flex flex-col justify-center bg-white hover:shadow-md p-3 border border-slate-200 hover:border-slate-300 overflow-hidden cursor-pointer stat-card pending"
-          data-filter="pending"
-        >
-          <div id="stat-pending" class="mb-1 font-bold text-amber-500 text-2xl leading-none">0</div>
-          <div class="font-semibold text-[10px] text-slate-500 uppercase tracking-wider">Pending</div>
-        </div>
-        <div class="relative flex flex-col justify-center bg-white hover:shadow-md p-3 border border-slate-200 hover:border-slate-300 overflow-hidden cursor-pointer stat-card done" data-filter="done">
-          <div id="stat-done" class="mb-1 font-bold text-emerald-500 text-2xl leading-none">0</div>
-          <div class="font-semibold text-[10px] text-slate-500 uppercase tracking-wider">Done</div>
-        </div>
-        <div
-          class="relative flex flex-col justify-center bg-white hover:shadow-md p-3 border border-slate-200 hover:border-slate-300 overflow-hidden cursor-pointer stat-card today"
-          data-filter="today"
-        >
-          <div id="stat-today" class="mb-1 font-bold text-blue-500 text-2xl leading-none">0</div>
-          <div class="font-semibold text-[10px] text-slate-500 uppercase tracking-wider">Saved Today</div>
-        </div>
-        <div
-          class="relative flex flex-col justify-center bg-white hover:shadow-md p-3 border border-slate-200 hover:border-slate-300 overflow-hidden cursor-pointer stat-card deleted"
-          data-filter="flagged"
-        >
-          <div id="stat-flagged" class="mb-1 font-bold text-rose-500 text-2xl leading-none">0</div>
-          <div class="font-semibold text-[10px] text-slate-500 uppercase tracking-wider">Flagged</div>
-        </div>
-        <div
-          class="relative flex flex-col justify-center bg-white hover:shadow-md p-3 border border-slate-200 hover:border-slate-300 overflow-hidden cursor-pointer stat-card broken"
-          data-filter="broken"
-        >
-          <div id="stat-broken" class="mb-1 font-bold text-red-600 text-2xl leading-none">0</div>
-          <div class="font-semibold text-[10px] text-slate-500 uppercase tracking-wider">Broken</div>
-        </div>
-      </div>
-
-      <div class="flex items-center gap-3 mb-3 shrink-0">
-        <div class="relative max-w-120 grow">
+        <div class="relative w-64 max-w-full">
           <!-- Inline SVG Search Icon -->
-          <svg class="top-1/2 left-3.5 absolute w-4 h-4 text-slate-400 -translate-y-1/2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+          <svg class="top-1/2 left-3 absolute w-4 h-4 text-slate-400 -translate-y-1/2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.637 10.637Z" />
           </svg>
           <input
             type="search"
             id="search"
             placeholder="Search saved videos..."
-            class="box-border bg-white px-3.5 py-1.5 pl-10 border border-slate-200 focus:border-blue-500 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 w-full text-slate-900 text-sm"
+            class="box-border bg-white pl-10 pr-3.5 border border-slate-200 focus:border-blue-500 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 w-full h-9 text-slate-900 text-sm"
           />
         </div>
+
         <select
           id="sort-filter"
-          class="bg-white px-3.5 py-1.5 border border-slate-200 focus:border-blue-500 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 h-[34px] text-slate-900 text-sm cursor-pointer"
+          class="bg-white px-3 border border-slate-200 focus:border-blue-500 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 h-9 text-slate-900 text-sm cursor-pointer"
         >
           <option value="collected-newest">Collected: Newest First</option>
           <option value="collected-oldest">Collected: Oldest First</option>
@@ -74,25 +33,53 @@
           <option value="posted-oldest">Posted: Oldest First</option>
         </select>
 
-        <button
-          id="auto-scroll"
-          class="bg-white hover:bg-slate-50 px-3.5 py-1.5 border border-slate-200 rounded-md h-[34px] text-slate-900 text-sm cursor-pointer"
-          title="Auto-scroll to cache thumbnails"
-        >
-          ▶
-        </button>
-
-        <button id="jump-to-top" title="Jump to top" class="bg-white hover:bg-slate-50 px-3.5 py-1.5 border border-slate-200 rounded-md h-[34px] text-slate-900 text-sm cursor-pointer">⬆</button>
-
-        <button id="jump-to-bottom" title="Jump to bottom" class="bg-white hover:bg-slate-50 px-3.5 py-1.5 border border-slate-200 rounded-md h-[34px] text-slate-900 text-sm cursor-pointer">⬇</button>
+        <div class="inline-flex divide-x divide-slate-200 bg-white border border-slate-200 rounded-md overflow-hidden">
+          <button id="auto-scroll" class="hover:bg-slate-50 px-3 h-9 text-slate-900 text-sm cursor-pointer" title="Auto-scroll to cache thumbnails" aria-label="Toggle auto-scroll">
+            <span id="scroll-icon">▶</span>
+          </button>
+          <button id="jump-to-top" title="Jump to top" aria-label="Jump to top" class="hover:bg-slate-50 px-3 h-9 text-slate-900 text-sm cursor-pointer">⬆</button>
+          <button id="jump-to-bottom" title="Jump to bottom" aria-label="Jump to bottom" class="hover:bg-slate-50 px-3 h-9 text-slate-900 text-sm cursor-pointer">⬇</button>
+        </div>
 
         <button
           id="mark-all-btn"
-          class="flex items-center gap-2 bg-white hover:bg-slate-50 px-3.5 py-1.5 border border-slate-200 rounded-md h-[34px] text-slate-900 text-sm cursor-pointer"
+          class="flex items-center gap-2 bg-white hover:bg-slate-50 px-3 h-9 border border-slate-200 rounded-md text-slate-900 text-sm cursor-pointer"
           title="Mark/Unmark All currently visible items"
         >
           <span>☑</span>
           <span id="mark-all-text">Mark All</span>
+        </button>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-2 mb-3 shrink-0">
+        <button type="button" class="filter-chip active" data-filter="all" aria-pressed="true">
+          <span>All</span>
+          <span id="stat-total" class="chip-count">0</span>
+        </button>
+        <button type="button" class="filter-chip pending" data-filter="pending" aria-pressed="false">
+          <span class="chip-dot"></span>
+          <span>Pending</span>
+          <span id="stat-pending" class="chip-count">0</span>
+        </button>
+        <button type="button" class="filter-chip done" data-filter="done" aria-pressed="false">
+          <span class="chip-dot"></span>
+          <span>Done</span>
+          <span id="stat-done" class="chip-count">0</span>
+        </button>
+        <button type="button" class="filter-chip today" data-filter="today" aria-pressed="false">
+          <span class="chip-dot"></span>
+          <span>Today</span>
+          <span id="stat-today" class="chip-count">0</span>
+        </button>
+        <button type="button" class="filter-chip flagged" data-filter="flagged" aria-pressed="false">
+          <span class="chip-dot"></span>
+          <span>Flagged</span>
+          <span id="stat-flagged" class="chip-count">0</span>
+        </button>
+        <button type="button" class="filter-chip broken" data-filter="broken" aria-pressed="false">
+          <span class="chip-dot"></span>
+          <span>Broken</span>
+          <span id="stat-broken" class="chip-count">0</span>
         </button>
       </div>
 
