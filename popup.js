@@ -1,7 +1,6 @@
 document.addEventListener("DOMContentLoaded", async () => {
   const startBtn = document.getElementById("startBtn");
   const exportBtn = document.getElementById("exportBtn");
-  const clearBtn = document.getElementById("clearBtn");
   const viewGalleryBtn = document.getElementById("viewGalleryBtn");
   const countEl = document.getElementById("count");
   const deletedCountEl = document.getElementById("deletedCount");
@@ -97,15 +96,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   // 4. View Gallery (Opens your dashboard/index.html)
   viewGalleryBtn.addEventListener("click", () => {
     chrome.tabs.create({ url: chrome.runtime.getURL("dashboard/index.html") });
-  });
-
-  // 5. Clear Data
-  clearBtn.addEventListener("click", async () => {
-    if (confirm("Are you sure you want to delete all saved video links?")) {
-      await chrome.storage.local.remove("collectedTweets");
-      chrome.action.setBadgeText({ text: "" }); // Clear the badge too
-      updateUI();
-    }
   });
 
   // Listen for updates from content script to refresh the count in real-time
