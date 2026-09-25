@@ -1,6 +1,7 @@
 <!doctype html>
-<html>
+<html lang="en">
   <head>
+    <meta charset="utf-8" />
     <style>
       body {
         width: 220px;
@@ -14,8 +15,6 @@
         color: #14171a;
       }
       button {
-        width: 100%;
-        margin-bottom: 8px;
         padding: 10px;
         border: none;
         border-radius: 5px;
@@ -23,15 +22,51 @@
         font-weight: bold;
         color: white;
       }
-      #startBtn {
+      /* Scraping controls sit side by side as a compact icon row */
+      .controls {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 10px;
+      }
+      .icon-btn {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 12px 0;
+      }
+      .icon {
+        width: 22px;
+        height: 22px;
+        display: none;
+      }
+      #startBtn[data-state="idle"] {
         background: #1da1f2;
       }
-      #startBtn:disabled {
+      #startBtn[data-state="scraping"] {
+        background: #e0245e;
+      }
+      #startBtn[data-state="blocked"] {
         background: #9aa5ad;
         cursor: not-allowed;
       }
+      #startBtn[data-state="idle"] .icon-play,
+      #startBtn[data-state="scraping"] .icon-stop,
+      #startBtn[data-state="blocked"] .icon-blocked {
+        display: block;
+      }
       #stopAllBtn {
         background: #e0245e;
+      }
+      #stopAllBtn .icon {
+        display: block;
+      }
+      #viewGalleryBtn,
+      #exportBtn {
+        width: 100%;
+      }
+      #viewGalleryBtn {
+        background: #673ab7;
       }
       #exportBtn {
         background: #17bf63;
@@ -41,14 +76,28 @@
 
   <body>
     <h3>Xcrapper</h3>
-    <button id="startBtn">Start Scraping</button>
-    <button id="stopAllBtn">Stop All Scraping</button>
+
+    <div class="controls">
+      <button id="startBtn" class="icon-btn" data-state="idle" title="Start scraping on this tab">
+        <svg class="icon icon-play" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
+        <svg class="icon icon-stop" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="1.5" /></svg>
+        <svg class="icon icon-blocked" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="9" />
+          <line x1="6" y1="6" x2="18" y2="18" />
+        </svg>
+      </button>
+      <button id="stopAllBtn" class="icon-btn" title="Stop scraping on all tabs">
+        <svg class="icon" viewBox="0 0 24 24" fill="currentColor">
+          <rect x="3" y="3" width="11" height="11" rx="1.5" opacity="0.55" />
+          <rect x="10" y="10" width="11" height="11" rx="1.5" />
+        </svg>
+      </button>
+    </div>
 
     <div style="background: #eee; padding: 10px; border-radius: 5px; margin-bottom: 10px; text-align: center"><span id="count">0</span> Videos Saved</div>
 
-    <div id="deletedContainer" style="background: #fee; padding: 10px; border-radius: 5px; margin-bottom: 10px; text-align: center; display: none"><span id="deletedCount">0</span> Deleted Items</div>
+    <button id="viewGalleryBtn" style="margin-top: 10px">View Saved Gallery</button>
 
-    <button id="viewGalleryBtn" style="background: #673ab7; margin-top: 10px">View Saved Gallery</button>
     <button id="exportBtn">Download CSV</button>
     <script src="popup.js"></script>
   </body>

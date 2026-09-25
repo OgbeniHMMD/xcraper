@@ -4,8 +4,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   const exportBtn = document.getElementById("exportBtn");
   const viewGalleryBtn = document.getElementById("viewGalleryBtn");
   const countEl = document.getElementById("count");
-  const deletedCountEl = document.getElementById("deletedCount");
-  const deletedContainer = document.getElementById("deletedContainer");
 
   let activeTabId = null;
 
@@ -18,25 +16,16 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // 1. Initial UI Update: Load current count from storage
   const updateUI = async () => {
-    const data = await chrome.storage.local.get(["collectedTweets", "deletedTweets"]);
+    const data = await chrome.storage.local.get(["collectedTweets"]);
     const tweets = data.collectedTweets || {};
-    const deleted = data.deletedTweets || {};
     countEl.innerText = Object.keys(tweets).length;
-
-    const deletedLen = Object.keys(deleted).length;
-    if (deletedLen > 0) {
-      deletedContainer.style.display = "block";
-      deletedCountEl.innerText = deletedLen;
-    } else {
-      deletedContainer.style.display = "none";
-    }
   };
 
-  // Reflect the scraping state of the active tab onto the start/stop button
+  // Reflect the scraping state of the active tab onto the icon button
   const setScrapeButtonState = (isScraping) => {
     startBtn.dataset.scraping = isScraping ? "true" : "false";
-    startBtn.innerText = isScraping ? "Stop Scraping" : "Start Scraping";
-    startBtn.style.background = isScraping ? "#e0245e" : "#1da1f2";
+    startBtn.dataset.state = isScraping ? "scraping" : "idle";
+    startBtn.title = isScraping ? "Stop scraping on this tab" : "Start scraping on this tab";
   };
 
   const refreshScrapeButton = async () => {
@@ -46,8 +35,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     if (!isXTab(tab)) {
       startBtn.disabled = true;
-      setScrapeButtonState(false);
-      startBtn.innerText = "Open X.com to scrape";
+      startBtn.dataset.state = "blocked";
+      startBtn.title = "Open X.com to scrape";
       return;
     }
 
