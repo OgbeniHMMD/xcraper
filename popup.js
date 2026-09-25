@@ -1,10 +1,20 @@
 document.addEventListener("DOMContentLoaded", async () => {
   const startBtn = document.getElementById("startBtn");
+  const stopAllBtn = document.getElementById("stopAllBtn");
   const exportBtn = document.getElementById("exportBtn");
   const viewGalleryBtn = document.getElementById("viewGalleryBtn");
   const countEl = document.getElementById("count");
   const deletedCountEl = document.getElementById("deletedCount");
   const deletedContainer = document.getElementById("deletedContainer");
+
+  let activeTabId = null;
+
+  const getActiveTab = async () => {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    return tab;
+  };
+
+  const isXTab = (tab) => !!tab && !!tab.url && (tab.url.includes("x.com") || tab.url.includes("twitter.com"));
 
   // 1. Initial UI Update: Load current count from storage
   const updateUI = async () => {
@@ -21,46 +31,89 @@ document.addEventListener("DOMContentLoaded", async () => {
       deletedContainer.style.display = "none";
     }
   };
-  updateUI();
 
-  // 1. Scraping Handler (Logic combined into one)
+  // Reflect the scraping state of the active tab onto the start/stop button
+  const setScrapeButtonState = (isScraping) => {
+    startBtn.dataset.scraping = isScraping ? "true" : "false";
+    startBtn.innerText = isScraping ? "Stop Scraping" : "Start Scraping";
+    startBtn.style.background = isScraping ? "#e0245e" : "#1da1f2";
+  };
+
+  const refreshScrapeButton = async () => {
+    const tab = await getActiveTab();
+    if (!tab) return;
+    activeTabId = tab.id;
+
+    if (!isXTab(tab)) {
+      startBtn.disabled = true;
+      setScrapeButtonState(false);
+      startBtn.innerText = "Open X.com to scrape";
+      return;
+    }
+
+    startBtn.disabled = false;
+    try {
+      const res = await chrome.tabs.sendMessage(tab.id, { action: "get_status" });
+      setScrapeButtonState(!!(res && res.isScraping));
+    } catch (err) {
+      // No content script yet => not scraping on this tab
+      setScrapeButtonState(false);
+    }
+  };
+
+  await updateUI();
+  await refreshScrapeButton();
+
+  // 2. Start / stop scraping for the current tab
   startBtn.addEventListener("click", async () => {
-    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    const tab = await getActiveTab();
 
-    // 1. Basic check for X/Twitter
-    if (!tab.url.includes("x.com") && !tab.url.includes("twitter.com")) {
+    // Basic check for X/Twitter
+    if (!isXTab(tab)) {
       alert("Please open this on X.com");
       return;
     }
 
-    // Toggle scraping state
-    // Note: We need a way to know if we are currently scraping without relying on innerText
-    // But for now, let's just attempt to trigger it
+    const isScraping = startBtn.dataset.scraping === "true";
+
+    if (isScraping) {
+      try {
+        await chrome.tabs.sendMessage(tab.id, { action: "stop_scraping" });
+      } catch (err) {
+        console.log("Could not stop scraping on this tab:", err);
+      }
+      setScrapeButtonState(false);
+      return;
+    }
 
     try {
-      // Try sending the message
+      // Try sending the message to an already-injected content script
       await chrome.tabs.sendMessage(tab.id, { action: "start_scraping" });
-      startBtn.innerText = "Scraping...";
-      startBtn.style.opacity = "0.7";
     } catch (err) {
-      // 3. If it fails, the "receiving end does not exist" - so we inject it!
+      // The "receiving end does not exist" - so we inject it!
       console.log("Content script not found. Injecting now...");
-
       await chrome.scripting.executeScript({
         target: { tabId: tab.id },
         files: ["content.js"],
       });
-
-      // 4. Try sending the message again after a tiny delay
-      setTimeout(() => {
-        chrome.tabs.sendMessage(tab.id, { action: "start_scraping" });
-        startBtn.innerText = "Scraping...";
-        startBtn.style.opacity = "0.7";
-      }, 500);
+      await chrome.tabs.sendMessage(tab.id, { action: "start_scraping" });
     }
+
+    setScrapeButtonState(true);
   });
 
-  // 3. Download CSV
+  // 3. Stop every ongoing scrape across all tabs
+  stopAllBtn.addEventListener("click", async () => {
+    try {
+      const res = await chrome.runtime.sendMessage({ action: "stop_all" });
+      console.log(`Stopped scraping on ${res ? res.stopped : 0} tab(s).`);
+    } catch (err) {
+      console.log("Stop all failed:", err);
+    }
+    await refreshScrapeButton();
+  });
+
+  // 4. Download CSV
   exportBtn.addEventListener("click", async () => {
     const data = await chrome.storage.local.get(["collectedTweets"]);
     const tweets = Object.values(data.collectedTweets || {});
@@ -93,19 +146,27 @@ document.addEventListener("DOMContentLoaded", async () => {
     link.click();
   });
 
-  // 4. View Gallery (Opens your dashboard/index.html)
+  // 5. View Gallery (Opens your dashboard/index.html)
   viewGalleryBtn.addEventListener("click", () => {
     chrome.tabs.create({ url: chrome.runtime.getURL("dashboard/index.html") });
   });
 
-  // Listen for updates from content script to refresh the count in real-time
-  chrome.runtime.onMessage.addListener((request) => {
+  // Listen for updates from content scripts to refresh the count / button state
+  chrome.runtime.onMessage.addListener((request, sender) => {
+    const fromActiveTab = sender.tab && sender.tab.id === activeTabId;
+
     if (request.action === "update_badge") {
-      countEl.innerText = request.count;
+      if (typeof request.count === "number") countEl.innerText = request.count;
+      else updateUI();
+      if (fromActiveTab) setScrapeButtonState(true);
     }
-    if (request.action === "scraping_stopped") {
-      startBtn.innerText = "Start Scraping";
-      startBtn.style.opacity = "1";
+
+    if (request.action === "scraping_started" && fromActiveTab) {
+      setScrapeButtonState(true);
+    }
+
+    if (request.action === "scraping_stopped" && fromActiveTab) {
+      setScrapeButtonState(false);
     }
   });
 });

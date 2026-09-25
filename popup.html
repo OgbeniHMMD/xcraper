@@ -26,6 +26,13 @@
       #startBtn {
         background: #1da1f2;
       }
+      #startBtn:disabled {
+        background: #9aa5ad;
+        cursor: not-allowed;
+      }
+      #stopAllBtn {
+        background: #e0245e;
+      }
       #exportBtn {
         background: #17bf63;
       }
@@ -35,6 +42,7 @@
   <body>
     <h3>Xcrapper</h3>
     <button id="startBtn">Start Scraping</button>
+    <button id="stopAllBtn">Stop All Scraping</button>
 
     <div style="background: #eee; padding: 10px; border-radius: 5px; margin-bottom: 10px; text-align: center"><span id="count">0</span> Videos Saved</div>
 
