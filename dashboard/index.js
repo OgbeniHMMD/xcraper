@@ -35,6 +35,9 @@ async function loadGallery() {
   // An empty thumbnail counts as broken too.
   const isThumbBroken = (t) => !t.thumbnail || brokenLinks.has(t.link);
 
+  // Broken items that still need attention (not already done/flagged).
+  const isBrokenPending = (t) => isThumbBroken(t) && !t.isDone && !t.isFlagged;
+
   // Probe a single thumbnail without rendering it (covers lazy/unrendered cards).
   const verifyThumbnail = (t) =>
     new Promise((resolve) => {
@@ -122,7 +125,7 @@ async function loadGallery() {
     } else if (activeStatusFilter === "flagged") {
       result = result.filter((t) => t.isFlagged);
     } else if (activeStatusFilter === "broken") {
-      result = result.filter(isThumbBroken);
+      result = result.filter(isBrokenPending);
     }
 
     const query = search.value.toLowerCase().trim();
@@ -154,7 +157,7 @@ async function loadGallery() {
     const todayStr = new Date().toDateString();
     document.getElementById("stat-today").innerText = tweets.filter((t) => t.collectedAt && new Date(t.collectedAt).toDateString() === todayStr).length;
     document.getElementById("stat-flagged").innerText = tweets.filter((t) => t.isFlagged).length;
-    document.getElementById("stat-broken").innerText = tweets.filter(isThumbBroken).length;
+    document.getElementById("stat-broken").innerText = tweets.filter(isBrokenPending).length;
   };
 
   const updateMarkAllButtonState = () => {
