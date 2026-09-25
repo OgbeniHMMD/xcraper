@@ -21,6 +21,51 @@ async function loadGallery() {
     }
   };
 
+  // Broken-thumbnail detection. `alt` is static, so it can't tell us if an
+  // image actually loaded. We rely on the image `error` event / naturalWidth
+  // and record the results here.
+  const brokenLinks = new Set();
+  const checkedLinks = new Set();
+
+  const markThumbBroken = (link) => {
+    brokenLinks.add(link);
+    checkedLinks.add(link);
+  };
+
+  // An empty thumbnail counts as broken too.
+  const isThumbBroken = (t) => !t.thumbnail || brokenLinks.has(t.link);
+
+  // Probe a single thumbnail without rendering it (covers lazy/unrendered cards).
+  const verifyThumbnail = (t) =>
+    new Promise((resolve) => {
+      if (checkedLinks.has(t.link)) return resolve();
+      if (!t.thumbnail) {
+        markThumbBroken(t.link);
+        return resolve();
+      }
+      const img = new Image();
+      img.onload = () => {
+        checkedLinks.add(t.link);
+        resolve();
+      };
+      img.onerror = () => {
+        markThumbBroken(t.link);
+        resolve();
+      };
+      img.src = t.thumbnail;
+    });
+
+  // Run probes with bounded concurrency so a large collection doesn't fire
+  // thousands of requests at once.
+  const scanThumbnails = async (items = tweets, concurrency = 8) => {
+    const queue = items.filter((t) => !checkedLinks.has(t.link));
+    let i = 0;
+    const worker = async () => {
+      while (i < queue.length) await verifyThumbnail(queue[i++]);
+    };
+    await Promise.all(Array.from({ length: Math.min(concurrency, queue.length) }, worker));
+  };
+
   const render = (items) => {
     if (items.length === 0) {
       grid.innerHTML = `<div class="col-span-full text-center text-slate-400 py-10 font-medium text-sm">No videos found.</div>`;
@@ -46,7 +91,7 @@ async function loadGallery() {
                      </div>`
                      : ""
                  }
-                 <img src="${t.thumbnail || ""}" loading="lazy" alt="No Preview" class="w-full h-full object-contain">
+                 <img src="${t.thumbnail || ""}" data-link="${t.link}" loading="lazy" alt="No Preview" class="w-full h-full object-contain">
              </div>
            </label>
            <div class="p-2 flex flex-col grow">
@@ -58,6 +103,11 @@ async function loadGallery() {
         `;
       })
       .join("");
+
+    // Record images that fail to load as the user browses.
+    grid.querySelectorAll("img[data-link]").forEach((img) => {
+      img.addEventListener("error", () => markThumbBroken(img.getAttribute("data-link")));
+    });
   };
 
   const getProcessedTweets = () => {
@@ -71,6 +121,8 @@ async function loadGallery() {
       result = result.filter((t) => t.collectedAt && new Date(t.collectedAt).toDateString() === todayStr);
     } else if (activeStatusFilter === "flagged") {
       result = result.filter((t) => t.isFlagged);
+    } else if (activeStatusFilter === "broken") {
+      result = result.filter(isThumbBroken);
     }
 
     const query = search.value.toLowerCase().trim();
@@ -102,6 +154,7 @@ async function loadGallery() {
     const todayStr = new Date().toDateString();
     document.getElementById("stat-today").innerText = tweets.filter((t) => t.collectedAt && new Date(t.collectedAt).toDateString() === todayStr).length;
     document.getElementById("stat-flagged").innerText = tweets.filter((t) => t.isFlagged).length;
+    document.getElementById("stat-broken").innerText = tweets.filter(isThumbBroken).length;
   };
 
   const updateMarkAllButtonState = () => {
@@ -128,13 +181,20 @@ async function loadGallery() {
   });
 
   document.querySelectorAll(".stat-card").forEach((card) => {
-    card.addEventListener("click", () => {
+    card.addEventListener("click", async () => {
       document.querySelectorAll(".stat-card").forEach((c) => c.classList.remove("active", "border-indigo-500", "ring-2", "ring-indigo-100"));
       card.classList.add("active", "border-indigo-500", "ring-2", "ring-indigo-100");
 
       activeStatusFilter = card.getAttribute("data-filter");
       search.value = "";
       selectedItems.clear();
+
+      if (activeStatusFilter === "broken") {
+        grid.innerHTML = `<div class="col-span-full text-center text-slate-400 py-10 font-medium text-sm">Scanning thumbnails…</div>`;
+        await scanThumbnails();
+        updateStats();
+      }
+
       render(getProcessedTweets());
       updateMarkAllButtonState();
     });
