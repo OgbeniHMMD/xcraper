@@ -14,11 +14,12 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   const isXTab = (tab) => !!tab && !!tab.url && (tab.url.includes("x.com") || tab.url.includes("twitter.com"));
 
-  // 1. Initial UI Update: Load current count from storage
+  // 1. Initial UI Update: Load how many items were collected today from storage
   const updateUI = async () => {
     const data = await chrome.storage.local.get(["collectedTweets"]);
-    const tweets = data.collectedTweets || {};
-    countEl.innerText = Object.keys(tweets).length;
+    const tweets = Object.values(data.collectedTweets || {});
+    const todayStr = new Date().toDateString();
+    countEl.innerText = tweets.filter((t) => t.collectedAt && new Date(t.collectedAt).toDateString() === todayStr).length;
   };
 
   // Reflect the scraping state of the active tab onto the icon button
@@ -125,8 +126,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     const fromActiveTab = sender.tab && sender.tab.id === activeTabId;
 
     if (request.action === "update_badge") {
-      if (typeof request.count === "number") countEl.innerText = request.count;
-      else updateUI();
+      // Recompute from storage so we always reflect today's count, not the
+      // overall count that content scripts include in the message.
+      updateUI();
       if (fromActiveTab) setScrapeButtonState(true);
     }
 
