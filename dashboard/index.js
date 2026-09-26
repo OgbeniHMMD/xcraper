@@ -367,6 +367,59 @@ async function loadGallery() {
     render(visibleTweets);
   });
 
+  // CSV export: all items, the current filtered/sorted view, or the selection.
+  const exportWrap = document.getElementById("export-wrap");
+  const exportBtn = document.getElementById("export-btn");
+  const exportMenu = document.getElementById("export-menu");
+
+  const getSelectedTweets = () => tweets.filter((t) => selectedItems.has(t.link));
+
+  const closeExportMenu = () => {
+    exportMenu.classList.add("hidden");
+    exportBtn.setAttribute("aria-expanded", "false");
+  };
+
+  const openExportMenu = () => {
+    const viewCount = getProcessedTweets().length;
+    const selectedCount = selectedItems.size;
+    exportMenu.innerHTML = `
+      <button class="export-action" role="menuitem" data-scope="all">Export all (${tweets.length})</button>
+      <button class="export-action" role="menuitem" data-scope="view">Export current view (${viewCount})</button>
+      <button class="export-action" role="menuitem" data-scope="selected" ${selectedCount ? "" : "disabled"}>Export selected (${selectedCount})</button>
+    `;
+    exportMenu.classList.remove("hidden");
+    exportBtn.setAttribute("aria-expanded", "true");
+  };
+
+  const runExport = (scope) => {
+    const items = scope === "selected" ? getSelectedTweets() : scope === "view" ? getProcessedTweets() : tweets;
+    window.XcrapperCSV.downloadTweetsCsv(items);
+  };
+
+  if (exportBtn && exportMenu) {
+    exportBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      if (exportMenu.classList.contains("hidden")) openExportMenu();
+      else closeExportMenu();
+    });
+
+    exportMenu.addEventListener("click", (e) => {
+      const action = e.target.closest(".export-action");
+      if (!action || action.disabled) return;
+      runExport(action.dataset.scope);
+      closeExportMenu();
+    });
+
+    // Close when clicking outside the dropdown.
+    document.addEventListener("click", (e) => {
+      if (!exportWrap.contains(e.target)) closeExportMenu();
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") closeExportMenu();
+    });
+  }
+
   // Auto-scroll logic
   const autoScrollBtn = document.getElementById("auto-scroll");
   const scrollIcon = document.getElementById("scroll-icon");

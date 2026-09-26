@@ -4,6 +4,48 @@
     <meta charset="UTF-8" />
     <title>Xscrapper Gallery</title>
     <link href="tailwind.css" rel="stylesheet" />
+    <style>
+      /* Export dropdown. Kept inline so it doesn't depend on a Tailwind rebuild. */
+      #export-wrap {
+        position: relative;
+      }
+      #export-menu {
+        position: absolute;
+        top: calc(100% + 4px);
+        right: 0;
+        min-width: 210px;
+        background: #fff;
+        border: 1px solid var(--color-slate-200, #e2e8f0);
+        border-radius: 8px;
+        box-shadow:
+          0 10px 15px -3px rgb(0 0 0 / 0.1),
+          0 4px 6px -4px rgb(0 0 0 / 0.1);
+        padding: 4px;
+        z-index: 100;
+      }
+      #export-menu.hidden {
+        display: none;
+      }
+      .export-action {
+        display: block;
+        width: 100%;
+        text-align: left;
+        padding: 8px 12px;
+        font-size: 13px;
+        border: none;
+        border-radius: 6px;
+        background: transparent;
+        cursor: pointer;
+        color: #0f172a;
+      }
+      .export-action:hover:not(:disabled) {
+        background: #f1f5f9;
+      }
+      .export-action:disabled {
+        color: #94a3b8;
+        cursor: not-allowed;
+      }
+    </style>
   </head>
   <body class="bg-slate-50 m-0 p-4 h-screen overflow-hidden flex flex-col text-slate-900">
     <div class="mx-auto max-w-400 w-full flex flex-col h-full overflow-hidden">
@@ -49,6 +91,20 @@
           <span>☑</span>
           <span id="mark-all-text">Mark All</span>
         </button>
+
+        <div id="export-wrap">
+          <button
+            id="export-btn"
+            class="flex items-center gap-2 bg-white hover:bg-slate-50 px-3 h-9 border border-slate-200 rounded-md text-slate-900 text-sm cursor-pointer"
+            title="Export collected videos to CSV"
+            aria-haspopup="true"
+            aria-expanded="false"
+          >
+            <span>⬇</span>
+            <span>Export</span>
+          </button>
+          <div id="export-menu" class="hidden" role="menu"></div>
+        </div>
       </div>
 
       <div class="flex flex-wrap items-center gap-2 mb-3 shrink-0">
@@ -88,6 +144,7 @@
       </div>
     </div>
 
+    <script src="../lib/csv.js"></script>
     <script src="./index.js"></script>
   </body>
 </html>
