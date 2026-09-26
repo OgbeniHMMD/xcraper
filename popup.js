@@ -112,27 +112,34 @@ document.addEventListener("DOMContentLoaded", async () => {
       return;
     }
 
-    // Create CSV Header and Rows
-    const headers = ["Link", "Text", "Time", "Original Source", "Original Link"];
-    const csvContent = [
-      headers.join(","),
-      ...tweets.map((t) =>
-        [
-          `"${t.link}"`,
-          `"${t.text.replace(/"/g, '""')}"`, // Escape quotes for CSV
-          `"${t.time}"`,
-          `"${t.originalSource || "N/A"}"`,
-          `"${t.originalLink || "N/A"}"`,
-        ].join(","),
-      ),
-    ].join("\n");
+    // Escape a value for CSV: force it to a string, neutralize spreadsheet
+    // formula injection, flatten newlines, then quote and double inner quotes.
+    const csvCell = (value) => {
+      let str = value === null || value === undefined ? "" : String(value);
+      // A leading =, +, -, @, tab, or CR is treated as a formula by Excel/Sheets.
+      if (/^[=+\-@\t\r]/.test(str)) str = "'" + str;
+      str = str.replace(/\r?\n/g, " ");
+      return `"${str.replace(/"/g, '""')}"`;
+    };
 
-    const blob = new Blob([csvContent], { type: "text/csv" });
+    // Create CSV Header and Rows
+    const headers = ["Link", "Text", "Time", "Is Retweet", "Collected At", "Thumbnail", "Done", "Flagged"];
+    const csvContent =
+      "\uFEFF" +
+      [
+        headers.map(csvCell).join(","),
+        ...tweets.map((t) => [t.link, t.text, t.time, t.isRetweet ? "Yes" : "No", t.collectedAt, t.thumbnail, t.isDone ? "Yes" : "No", t.isFlagged ? "Yes" : "No"].map(csvCell).join(",")),
+      ].join("\r\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `X_Video_Data_${new Date().toISOString().split("T")[0]}.csv`;
+    link.download = `xscrapper_${new Date().toISOString().split("T")[0]}.csv`;
+    document.body.appendChild(link);
     link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
   });
 
   // 5. View Gallery (Opens your dashboard/index.html)
