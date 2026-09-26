@@ -45,6 +45,12 @@
         color: #94a3b8;
         cursor: not-allowed;
       }
+      /* Skip layout/paint for cards scrolled far out of view. The `auto` keyword
+         keeps the last-measured size, so rendered cards don't cause scroll jump. */
+      .item-card {
+        content-visibility: auto;
+        contain-intrinsic-size: auto 320px;
+      }
     </style>
   </head>
   <body class="bg-slate-50 m-0 p-4 h-screen overflow-hidden flex flex-col text-slate-900">
@@ -141,6 +147,7 @@
 
       <div id="scroll-container" class="overflow-y-auto grow">
         <div id="grid" class="gap-4 grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))]"></div>
+        <div id="grid-sentinel" aria-hidden="true"></div>
       </div>
     </div>
 

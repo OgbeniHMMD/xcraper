@@ -5,11 +5,23 @@ async function loadGallery() {
   let activeStatusFilter = "all";
   let selectedItems = new Set();
 
+  // Bumped whenever the underlying data or derived sets change, so that cached
+  // filtered/sorted views are invalidated.
+  let dataVersion = 0;
+
+  // Cards are added to the DOM in chunks and more are appended as the user
+  // scrolls. Building one giant string for a 10k+ collection melts the layout.
+  const RENDER_CHUNK = 150;
+  let currentView = [];
+  let renderedCount = 0;
+
   const grid = document.getElementById("grid");
   const search = document.getElementById("search");
   const sortFilter = document.getElementById("sort-filter");
   const markAllBtn = document.getElementById("mark-all-btn");
   const markAllText = document.getElementById("mark-all-text");
+  const scrollContainer = document.getElementById("scroll-container") || window;
+  const sentinel = document.getElementById("grid-sentinel");
 
   // Helper to extract username safely
   const getUsername = (link) => {
@@ -41,6 +53,33 @@ async function loadGallery() {
     return date.toLocaleDateString();
   };
 
+  // Parsing dates on every comparison/sort is a major cost at scale, so parse
+  // each value once and cache it on the tweet object via a WeakMap.
+  const tsCache = new WeakMap();
+  const toTs = (t, field) => {
+    let value = tsCache.get(t);
+    if (!value) {
+      value = {};
+      tsCache.set(t, value);
+    }
+    if (!(field in value)) {
+      const raw = t[field];
+      const ms = raw ? new Date(raw).getTime() : 0;
+      value[field] = Number.isNaN(ms) ? 0 : ms;
+    }
+    return value[field];
+  };
+
+  const dayKeyCache = new WeakMap();
+  const getDayKey = (t) => {
+    let key = dayKeyCache.get(t);
+    if (key === undefined) {
+      key = t.collectedAt ? new Date(t.collectedAt).toDateString() : "";
+      dayKeyCache.set(t, key);
+    }
+    return key;
+  };
+
   // Broken-thumbnail detection. `alt` is static, so it can't tell us if an
   // image actually loaded. We rely on the image `error` event / naturalWidth
   // and record the results here.
@@ -48,6 +87,7 @@ async function loadGallery() {
   const checkedLinks = new Set();
 
   const markThumbBroken = (link) => {
+    if (!brokenLinks.has(link)) dataVersion++;
     brokenLinks.add(link);
     checkedLinks.add(link);
   };
@@ -89,55 +129,77 @@ async function loadGallery() {
     await Promise.all(Array.from({ length: Math.min(concurrency, queue.length) }, worker));
   };
 
+  const buildCard = (t) => {
+    const username = getUsername(t.link);
+    const cardClasses = `group relative item-card flex flex-col overflow-hidden rounded-xl bg-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${
+      t.isFlagged ? "border border-red-300 ring-1 ring-red-500/60" : t.isDone ? "border border-emerald-300 ring-1 ring-emerald-500/60" : "border border-slate-200 hover:border-slate-300"
+    }`;
+
+    const statusBadge = t.isFlagged
+      ? `<span class="absolute top-2 right-2 z-20 inline-flex items-center gap-1 rounded-full bg-red-600/90 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-white shadow-sm">⚑ Flagged</span>`
+      : t.isDone
+        ? `<span class="absolute top-2 right-2 z-20 inline-flex items-center gap-1 rounded-full bg-emerald-600/90 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-white shadow-sm">✓ Done</span>`
+        : "";
+
+    return `
+      <div class="${cardClasses}">
+        <label class="block cursor-pointer">
+          <input type="checkbox" data-link="${t.link}" ${selectedItems.has(t.link) ? "checked" : ""} class="select-checkbox card-checkbox peer">
+          <div class="relative aspect-3/4 w-full overflow-hidden bg-slate-900 peer-checked:ring-2 peer-checked:ring-inset peer-checked:ring-blue-500">
+            <div class="pointer-events-none absolute inset-x-0 top-0 z-10 h-14 bg-linear-to-b from-black/60 to-transparent"></div>
+            ${statusBadge}
+            <img src="${t.thumbnail || ""}" data-link="${t.link}" loading="lazy" alt="No Preview" class="h-full w-full object-contain transition-transform duration-300 group-hover:scale-[1.03]">
+          </div>
+        </label>
+        <div class="flex grow flex-col gap-1 p-2.5">
+          <div class="flex items-center justify-between gap-2">
+            <span class="truncate text-[11px] font-semibold text-slate-700">${username}</span>
+            <span class="shrink-0 text-[10px] font-medium tabular-nums text-slate-400" title="${t.time ? new Date(t.time).toLocaleString() : "Unknown post time"}">${t.time ? timeAgo(t.time) : "N/A"}</span>
+          </div>
+          <p class="line-clamp-2 text-[11px] leading-snug text-slate-600">${t.text || "[No Text]"}</p>
+          <div class="mt-auto pt-0.5 text-[10px] text-slate-400" title="${t.collectedAt ? new Date(t.collectedAt).toLocaleString() : ""}">Saved ${timeAgo(t.collectedAt) || "unknown"}</div>
+        </div>
+      </div>
+    `;
+  };
+
+  // Append the next slice of the current view. Called on render and whenever the
+  // sentinel below the grid scrolls into view.
+  const appendNextChunk = () => {
+    if (renderedCount >= currentView.length) return;
+    const slice = currentView.slice(renderedCount, renderedCount + RENDER_CHUNK);
+    renderedCount += slice.length;
+    grid.insertAdjacentHTML("beforeend", slice.map(buildCard).join(""));
+    if (sentinel) sentinel.hidden = renderedCount >= currentView.length;
+  };
+
+  // Rebuild the grid from the given processed view, starting with the first
+  // chunk. Off-screen chunks are appended lazily via the sentinel observer.
   const render = (items) => {
+    currentView = items;
+    renderedCount = 0;
+
     if (items.length === 0) {
       grid.innerHTML = `<div class="col-span-full text-center text-slate-400 py-10 font-medium text-sm">No videos found.</div>`;
+      if (sentinel) sentinel.hidden = true;
       return;
     }
 
-    grid.innerHTML = items
-      .map((t) => {
-        const username = getUsername(t.link);
-        const cardClasses = `group relative item-card flex flex-col overflow-hidden rounded-xl bg-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${
-          t.isFlagged ? "border border-red-300 ring-1 ring-red-500/60" : t.isDone ? "border border-emerald-300 ring-1 ring-emerald-500/60" : "border border-slate-200 hover:border-slate-300"
-        }`;
-
-        const statusBadge = t.isFlagged
-          ? `<span class="absolute top-2 right-2 z-20 inline-flex items-center gap-1 rounded-full bg-red-600/90 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-white shadow-sm">⚑ Flagged</span>`
-          : t.isDone
-            ? `<span class="absolute top-2 right-2 z-20 inline-flex items-center gap-1 rounded-full bg-emerald-600/90 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-white shadow-sm">✓ Done</span>`
-            : "";
-
-        return `
-          <div class="${cardClasses}">
-            <label class="block cursor-pointer">
-              <input type="checkbox" data-link="${t.link}" ${selectedItems.has(t.link) ? "checked" : ""} class="select-checkbox card-checkbox peer">
-              <div class="relative aspect-3/4 w-full overflow-hidden bg-slate-900 peer-checked:ring-2 peer-checked:ring-inset peer-checked:ring-blue-500">
-                <div class="pointer-events-none absolute inset-x-0 top-0 z-10 h-14 bg-linear-to-b from-black/60 to-transparent"></div>
-                ${statusBadge}
-                <img src="${t.thumbnail || ""}" data-link="${t.link}" loading="lazy" alt="No Preview" class="h-full w-full object-contain transition-transform duration-300 group-hover:scale-[1.03]">
-              </div>
-            </label>
-            <div class="flex grow flex-col gap-1 p-2.5">
-              <div class="flex items-center justify-between gap-2">
-                <span class="truncate text-[11px] font-semibold text-slate-700">${username}</span>
-                <span class="shrink-0 text-[10px] font-medium tabular-nums text-slate-400" title="${t.time ? new Date(t.time).toLocaleString() : "Unknown post time"}">${t.time ? timeAgo(t.time) : "N/A"}</span>
-              </div>
-              <p class="line-clamp-2 text-[11px] leading-snug text-slate-600">${t.text || "[No Text]"}</p>
-              <div class="mt-auto pt-0.5 text-[10px] text-slate-400" title="${t.collectedAt ? new Date(t.collectedAt).toLocaleString() : ""}">Saved ${timeAgo(t.collectedAt) || "unknown"}</div>
-            </div>
-          </div>
-        `;
-      })
-      .join("");
-
-    // Record images that fail to load as the user browses.
-    grid.querySelectorAll("img[data-link]").forEach((img) => {
-      img.addEventListener("error", () => markThumbBroken(img.getAttribute("data-link")));
-    });
+    grid.innerHTML = "";
+    appendNextChunk();
   };
 
+  // Cached filtered/sorted view. The key covers every input that can change the
+  // result, so repeated calls (mark-all state, export menu, render) are free.
+  let viewCacheKey = null;
+  let viewCache = [];
+
   const getProcessedTweets = () => {
+    const query = search.value.toLowerCase().trim();
+    const sortBy = sortFilter.value;
+    const cacheKey = `${activeStatusFilter}\u0000${query}\u0000${sortBy}\u0000${dataVersion}`;
+    if (cacheKey === viewCacheKey) return viewCache;
+
     let result = tweets;
     if (activeStatusFilter === "pending") {
       result = result.filter((t) => !t.isDone && !t.isFlagged);
@@ -145,43 +207,71 @@ async function loadGallery() {
       result = result.filter((t) => t.isDone);
     } else if (activeStatusFilter === "today") {
       const todayStr = new Date().toDateString();
-      result = result.filter((t) => t.collectedAt && new Date(t.collectedAt).toDateString() === todayStr);
+      result = result.filter((t) => getDayKey(t) === todayStr);
     } else if (activeStatusFilter === "flagged") {
       result = result.filter((t) => t.isFlagged);
     } else if (activeStatusFilter === "broken") {
       result = result.filter(isBrokenPending);
     }
 
-    const query = search.value.toLowerCase().trim();
     if (query) {
+      const userQuery = query.replace("@", "");
+      const userCache = new Map();
       result = result.filter((t) => {
         const matchText = t.text && t.text.toLowerCase().includes(query);
-        const username = getUsername(t.link).toLowerCase();
-        const matchUser = username.includes(query.replace("@", ""));
-        return matchText || matchUser;
+        let username = userCache.get(t.link);
+        if (username === undefined) {
+          username = getUsername(t.link).toLowerCase();
+          userCache.set(t.link, username);
+        }
+        return matchText || username.includes(userQuery);
       });
     }
 
-    const sortBy = sortFilter.value;
-    result.sort((a, b) => {
-      if (sortBy === "collected-newest") return new Date(b.collectedAt || 0) - new Date(a.collectedAt || 0);
-      if (sortBy === "collected-oldest") return new Date(a.collectedAt || 0) - new Date(b.collectedAt || 0);
-      if (sortBy === "posted-newest") return (b.time ? new Date(b.time) : 0) - (a.time ? new Date(a.time) : 0);
-      if (sortBy === "posted-oldest") return (a.time ? new Date(a.time) : 0) - (b.time ? new Date(b.time) : 0);
-      return 0;
-    });
+    // Decorate-sort-undecorate: timestamps are parsed once instead of on every
+    // comparison, which matters a lot for 10k+ items.
+    const field = sortBy.startsWith("collected") ? "collectedAt" : sortBy.startsWith("posted") ? "time" : null;
+    if (field) {
+      const dir = sortBy.endsWith("newest") ? -1 : 1;
+      result = result
+        .map((t, i) => [t, toTs(t, field), i])
+        .sort((a, b) => (a[1] - b[1]) * dir || a[2] - b[2])
+        .map((entry) => entry[0]);
+    } else {
+      result = result.slice();
+    }
 
+    viewCacheKey = cacheKey;
+    viewCache = result;
     return result;
   };
 
   const updateStats = () => {
-    document.getElementById("stat-total").innerText = tweets.length;
-    document.getElementById("stat-pending").innerText = tweets.filter((t) => !t.isDone && !t.isFlagged).length;
-    document.getElementById("stat-done").innerText = tweets.filter((t) => t.isDone).length;
     const todayStr = new Date().toDateString();
-    document.getElementById("stat-today").innerText = tweets.filter((t) => t.collectedAt && new Date(t.collectedAt).toDateString() === todayStr).length;
-    document.getElementById("stat-flagged").innerText = tweets.filter((t) => t.isFlagged).length;
-    document.getElementById("stat-broken").innerText = tweets.filter(isBrokenPending).length;
+    let pending = 0;
+    let done = 0;
+    let today = 0;
+    let flagged = 0;
+    let broken = 0;
+
+    for (const t of tweets) {
+      const isDone = !!t.isDone;
+      const isFlagged = !!t.isFlagged;
+      if (isDone) done++;
+      if (isFlagged) flagged++;
+      if (!isDone && !isFlagged) {
+        pending++;
+        if (isThumbBroken(t)) broken++;
+      }
+      if (getDayKey(t) === todayStr) today++;
+    }
+
+    document.getElementById("stat-total").innerText = tweets.length;
+    document.getElementById("stat-pending").innerText = pending;
+    document.getElementById("stat-done").innerText = done;
+    document.getElementById("stat-today").innerText = today;
+    document.getElementById("stat-flagged").innerText = flagged;
+    document.getElementById("stat-broken").innerText = broken;
   };
 
   const updateMarkAllButtonState = () => {
@@ -197,9 +287,14 @@ async function loadGallery() {
   };
 
   // Event Listeners
+  // Debounce typing so a large collection isn't re-filtered on every keystroke.
+  let searchDebounce;
   search.addEventListener("input", () => {
-    render(getProcessedTweets());
-    updateMarkAllButtonState();
+    clearTimeout(searchDebounce);
+    searchDebounce = setTimeout(() => {
+      render(getProcessedTweets());
+      updateMarkAllButtonState();
+    }, 150);
   });
 
   sortFilter.addEventListener("change", () => {
@@ -222,6 +317,9 @@ async function loadGallery() {
 
       if (activeStatusFilter === "broken") {
         grid.innerHTML = `<div class="col-span-full text-center text-slate-400 py-10 font-medium text-sm">Scanning thumbnails…</div>`;
+        currentView = [];
+        renderedCount = 0;
+        if (sentinel) sentinel.hidden = true;
         await scanThumbnails();
         updateStats();
       }
@@ -332,6 +430,7 @@ async function loadGallery() {
         if (modified) {
           await chrome.storage.local.set({ collectedTweets: localData.collectedTweets });
           tweets = Object.values(localData.collectedTweets);
+          dataVersion++;
           render(getProcessedTweets());
           updateStats();
           updateMarkAllButtonState();
@@ -351,6 +450,17 @@ async function loadGallery() {
       updateMarkAllButtonState();
     }
   });
+
+  // Record images that fail to load as the user browses. `error` doesn't bubble,
+  // so listen in the capture phase; this covers lazily appended chunks too.
+  grid.addEventListener(
+    "error",
+    (e) => {
+      const img = e.target;
+      if (img && img.tagName === "IMG" && img.dataset.link) markThumbBroken(img.dataset.link);
+    },
+    true,
+  );
 
   markAllBtn.addEventListener("click", () => {
     const visibleTweets = getProcessedTweets();
@@ -429,8 +539,6 @@ async function loadGallery() {
   let isScrolling = false;
   let scrollInterval;
 
-  const scrollContainer = document.getElementById("scroll-container") || window;
-
   if (jumpToTopBtn) {
     jumpToTopBtn.addEventListener("click", () => {
       if (scrollContainer === window) {
@@ -485,6 +593,18 @@ async function loadGallery() {
     if (scrollIcon) scrollIcon.innerText = "▶";
     if (scrollText) scrollText.innerText = "Auto Scroll";
     if (autoScrollBtn) autoScrollBtn.classList.remove("bg-red-50", "border-red-200");
+  }
+
+  // Lazily append more cards as the sentinel below the grid scrolls into view.
+  // A generous rootMargin pre-loads the next chunk so scrolling stays smooth.
+  if (sentinel) {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) appendNextChunk();
+      },
+      { root: scrollContainer === window ? null : scrollContainer, rootMargin: "800px 0px" },
+    );
+    observer.observe(sentinel);
   }
 
   // Initial load
